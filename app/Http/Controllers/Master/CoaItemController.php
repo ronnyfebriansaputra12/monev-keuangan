@@ -23,6 +23,7 @@ class CoaItemController extends Controller
             'subKomponen',
             'mak.akun'
         ])
+            // Langsung ambil data field yang ada di tabel
             ->when($subKomponenId, fn($qq) => $qq->where('sub_komponen_id', (int)$subKomponenId))
             ->when($makId, fn($qq) => $qq->where('mak_id', (int)$makId))
             ->when($tahun, fn($qq) => $qq->where('tahun_anggaran', (int)$tahun))
@@ -35,7 +36,6 @@ class CoaItemController extends Controller
             ->get();
 
         $maks = Mak::with('akun')->orderBy('akun_id')->get();
-
         $subKomponens = SubKomponen::orderBy('kode_subkomponen')->get();
 
         return view('master.coa_items.index', compact(

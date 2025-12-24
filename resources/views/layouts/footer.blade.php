@@ -1,27 +1,30 @@
-        <footer class="footer">
-          <div class="container-fluid d-flex justify-content-between">
-            <nav class="pull-left">
-              <ul class="nav">
-                <li class="nav-item">
-                  <a class="nav-link" href="http://www.themekita.com">
-                    ThemeKita
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#"> Help </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#"> Licenses </a>
-                </li>
-              </ul>
-            </nav>
-            <div class="copyright">
-              2024, made with <i class="fa fa-heart heart text-danger"></i> by
-              <a href="http://www.themekita.com">ThemeKita</a>
-            </div>
-            <div>
-              Distributed by
-              <a target="_blank" href="https://themewagon.com/">ThemeWagon</a>.
-            </div>
-          </div>
-        </footer>
+<footer class="footer">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <nav class="pull-left">
+      <ul class="nav">
+        <li class="nav-item">
+          <a class="nav-link fw-bold text-primary" href="#">
+            Pusdatin Obat dan Makanan
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="fas fa-question-circle me-1"></i> Bantuan
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="fas fa-shield-alt me-1"></i> Privasi & Keamanan
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="copyright text-muted small">
+      &copy; {{ date('Y') }}, Monitoring Keuangan. Dikembangkan oleh
+      <span class="fw-bold text-dark">Tim IT Pusdatin</span>
+    </div>
+    <div class="distributed-by small text-muted">
+      Sistem Informasi Monitoring Anggaran v2.0
+    </div>
+  </div>
+</footer>

@@ -7,8 +7,7 @@
                   src="{{ asset('assets/img/kaiadmin/logo_light.svg') }}"
                   alt="navbar brand"
                   class="navbar-brand"
-                  height="20"
-                />
+                  height="20" />
               </a>
               <div class="nav-toggle">
                 <button class="btn btn-toggle toggle-sidebar">
@@ -26,12 +25,10 @@
           </div>
           <!-- Navbar Header -->
           <nav
-            class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"
-          >
+            class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
             <div class="container-fluid">
               <nav
-                class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
-              >
+                class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex">
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <button type="submit" class="btn btn-search pe-1">
@@ -41,23 +38,20 @@
                   <input
                     type="text"
                     placeholder="Search ..."
-                    class="form-control"
-                  />
+                    class="form-control" />
                 </div>
               </nav>
 
               <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
                 <li
-                  class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none"
-                >
+                  class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none">
                   <a
                     class="nav-link dropdown-toggle"
                     data-bs-toggle="dropdown"
                     href="#"
                     role="button"
                     aria-expanded="false"
-                    aria-haspopup="true"
-                  >
+                    aria-haspopup="true">
                     <i class="fa fa-search"></i>
                   </a>
                   <ul class="dropdown-menu dropdown-search animated fadeIn">
@@ -66,8 +60,7 @@
                         <input
                           type="text"
                           placeholder="Search ..."
-                          class="form-control"
-                        />
+                          class="form-control" />
                       </div>
                     </form>
                   </ul>
@@ -80,18 +73,15 @@
                     role="button"
                     data-bs-toggle="dropdown"
                     aria-haspopup="true"
-                    aria-expanded="false"
-                  >
+                    aria-expanded="false">
                     <i class="fa fa-envelope"></i>
                   </a>
                   <ul
                     class="dropdown-menu messages-notif-box animated fadeIn"
-                    aria-labelledby="messageDropdown"
-                  >
+                    aria-labelledby="messageDropdown">
                     <li>
                       <div
-                        class="dropdown-title d-flex justify-content-between align-items-center"
-                      >
+                        class="dropdown-title d-flex justify-content-between align-items-center">
                         Messages
                         <a href="#" class="small">Mark all as read</a>
                       </div>
@@ -103,8 +93,7 @@
                             <div class="notif-img">
                               <img
                                 src="{{ asset('assets/img/jm_denis.jpg') }}"
-                                alt="Img Profile"
-                              />
+                                alt="Img Profile" />
                             </div>
                             <div class="notif-content">
                               <span class="subject">Jimmy Denis</span>
@@ -116,8 +105,7 @@
                             <div class="notif-img">
                               <img
                                 src="{{ asset('assets/img/chadengle.jpg') }}"
-                                alt="Img Profile"
-                              />
+                                alt="Img Profile" />
                             </div>
                             <div class="notif-content">
                               <span class="subject">Chad</span>
@@ -129,8 +117,7 @@
                             <div class="notif-img">
                               <img
                                 src="{{ asset('assets/img/mlane.jpg') }}"
-                                alt="Img Profile"
-                              />
+                                alt="Img Profile" />
                             </div>
                             <div class="notif-content">
                               <span class="subject">Jhon Doe</span>
@@ -144,8 +131,7 @@
                             <div class="notif-img">
                               <img
                                 src="{{ asset('assets/img/talha.jpg') }}"
-                                alt="Img Profile"
-                              />
+                                alt="Img Profile" />
                             </div>
                             <div class="notif-content">
                               <span class="subject">Talha</span>
@@ -157,8 +143,7 @@
                       </div>
                     </li>
                     <li>
-                      <a class="see-all" href="javascript:void(0);"
-                        >See all messages<i class="fa fa-angle-right"></i>
+                      <a class="see-all" href="javascript:void(0);">See all messages<i class="fa fa-angle-right"></i>
                       </a>
                     </li>
                   </ul>
@@ -171,15 +156,13 @@
                     role="button"
                     data-bs-toggle="dropdown"
                     aria-haspopup="true"
-                    aria-expanded="false"
-                  >
+                    aria-expanded="false">
                     <i class="fa fa-bell"></i>
                     <span class="notification">4</span>
                   </a>
                   <ul
                     class="dropdown-menu notif-box animated fadeIn"
-                    aria-labelledby="notifDropdown"
-                  >
+                    aria-labelledby="notifDropdown">
                     <li>
                       <div class="dropdown-title">
                         You have 4 new notification
@@ -212,8 +195,7 @@
                             <div class="notif-img">
                               <img
                                 src="{{ asset('assets/img/profile2.jpg') }}"
-                                alt="Img Profile"
-                              />
+                                alt="Img Profile" />
                             </div>
                             <div class="notif-content">
                               <span class="block">
@@ -235,8 +217,7 @@
                       </div>
                     </li>
                     <li>
-                      <a class="see-all" href="javascript:void(0);"
-                        >See all notifications<i class="fa fa-angle-right"></i>
+                      <a class="see-all" href="javascript:void(0);">See all notifications<i class="fa fa-angle-right"></i>
                       </a>
                     </li>
                   </ul>
@@ -246,8 +227,7 @@
                     class="nav-link"
                     data-bs-toggle="dropdown"
                     href="#"
-                    aria-expanded="false"
-                  >
+                    aria-expanded="false">
                     <i class="fas fa-layer-group"></i>
                   </a>
                   <div class="dropdown-menu quick-actions animated fadeIn">
@@ -269,8 +249,7 @@
                           <a class="col-6 col-md-4 p-0" href="#">
                             <div class="quick-actions-item">
                               <div
-                                class="avatar-item bg-warning rounded-circle"
-                              >
+                                class="avatar-item bg-warning rounded-circle">
                                 <i class="fas fa-map"></i>
                               </div>
                               <span class="text">Maps</span>
@@ -287,8 +266,7 @@
                           <a class="col-6 col-md-4 p-0" href="#">
                             <div class="quick-actions-item">
                               <div
-                                class="avatar-item bg-success rounded-circle"
-                              >
+                                class="avatar-item bg-success rounded-circle">
                                 <i class="fas fa-envelope"></i>
                               </div>
                               <span class="text">Emails</span>
@@ -297,8 +275,7 @@
                           <a class="col-6 col-md-4 p-0" href="#">
                             <div class="quick-actions-item">
                               <div
-                                class="avatar-item bg-primary rounded-circle"
-                              >
+                                class="avatar-item bg-primary rounded-circle">
                                 <i class="fas fa-file-invoice-dollar"></i>
                               </div>
                               <span class="text">Invoice</span>
@@ -307,8 +284,7 @@
                           <a class="col-6 col-md-4 p-0" href="#">
                             <div class="quick-actions-item">
                               <div
-                                class="avatar-item bg-secondary rounded-circle"
-                              >
+                                class="avatar-item bg-secondary rounded-circle">
                                 <i class="fas fa-credit-card"></i>
                               </div>
                               <span class="text">Payments</span>
@@ -321,22 +297,13 @@
                 </li>
 
                 <li class="nav-item topbar-user dropdown hidden-caret">
-                  <a
-                    class="dropdown-toggle profile-pic"
-                    data-bs-toggle="dropdown"
-                    href="#"
-                    aria-expanded="false"
-                  >
+                  <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                     <div class="avatar-sm">
-                      <img
-                        src="{{ asset('assets/img/profile.jpg') }}"
-                        alt="..."
-                        class="avatar-img rounded-circle"
-                      />
+                      <img src="{{ asset('assets/img/profile.jpg') }}" alt="..." class="avatar-img rounded-circle" />
                     </div>
                     <span class="profile-username">
                       <span class="op-7">Hi,</span>
-                      <span class="fw-bold">Hizrian</span>
+                      <span class="fw-bold">{{ Auth::user()->name }}</span>
                     </span>
                   </a>
                   <ul class="dropdown-menu dropdown-user animated fadeIn">
@@ -344,32 +311,31 @@
                       <li>
                         <div class="user-box">
                           <div class="avatar-lg">
-                            <img
-                              src="{{ asset('assets/img/profile.jpg') }}"
-                              alt="image profile"
-                              class="avatar-img rounded"
-                            />
+                            <img src="{{ asset('assets/img/profile.jpg') }}" alt="image profile" class="avatar-img rounded" />
                           </div>
                           <div class="u-text">
-                            <h4>Hizrian</h4>
-                            <p class="text-muted">hello@example.com</p>
-                            <a
-                              href="profile.html"
-                              class="btn btn-xs btn-secondary btn-sm"
-                              >View Profile</a
-                            >
+                            <h4>{{ Auth::user()->name }}</h4>
+                            <p class="text-muted">{{ Auth::user()->email }}</p>
+                            <span class="badge badge-primary">{{ Auth::user()->role }}</span>
                           </div>
                         </div>
                       </li>
                       <li>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">My Profile</a>
-                        <a class="dropdown-item" href="#">My Balance</a>
-                        <a class="dropdown-item" href="#">Inbox</a>
+                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                          <i class="fas fa-user me-2"></i> My Profile
+                        </a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#">Account Setting</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Logout</a>
+
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                          @csrf
+                        </form>
+                        <a class="dropdown-item text-danger fw-bold" href="#"
+                          onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                          <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
                       </li>
                     </div>
                   </ul>

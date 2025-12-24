@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Master\{
     SatkerController,
     ProgramController,
@@ -15,18 +16,46 @@ use App\Http\Controllers\Master\{
     CoaItemController,
     PaguLineController
 };
-
 use App\Http\Controllers\Transaksi\{
     RealisasiHeaderController,
     RealisasiLineController,
     RealisasiAttachmentController
 };
+use App\Http\Controllers\Transaksi\Realisasi\RealisasiController;
+use App\Http\Controllers\RealisasiV2\RealisasiControllerV2;
 
-Route::middleware(['web'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Guest Routes
+|--------------------------------------------------------------------------
+*/
 
-    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'index'])->name('login');
+    Route::post('/login', [LoginController::class, 'authenticate']);
+});
 
-    // MASTER DATA
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes (Harus Login)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // Dashboard Utama (Satu Route)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [LoginController::class, 'edit'])->name('profile.edit');
+
+    // Menangani update data profil dan password
+    Route::put('/profile', [LoginController::class, 'update'])->name('profile.update');
+
+    /*
+    |--------------------------------------------------------------------------
+    | MASTER DATA (Akses Global)
+    |--------------------------------------------------------------------------
+    */
     Route::prefix('master')->name('master.')->group(function () {
         Route::resource('satkers', SatkerController::class);
         Route::resource('programs', ProgramController::class);
@@ -39,24 +68,45 @@ Route::middleware(['web'])->group(function () {
         Route::resource('maks', MakController::class);
         Route::resource('coa-items', CoaItemController::class);
         Route::resource('pagu-lines', PaguLineController::class);
+
+        Route::get('coa-items-bulk/edit', [CoaItemController::class, 'bulkEdit'])->name('coa-items.bulk-edit');
+        Route::post('coa-items-bulk/update', [CoaItemController::class, 'bulkUpdate'])->name('coa-items.bulk-update');
     });
-    Route::get('master/coa-items/bulk-edit', [CoaItemController::class, 'bulkEdit'])
-        ->name('master.coa-items.bulk-edit');
 
-    Route::post('master/coa-items/bulk-update', [CoaItemController::class, 'bulkUpdate'])
-        ->name('master.coa-items.bulk-update');
-
-
-    // TRANSAKSI REALISASI
-    Route::prefix('transaksi')->name('transaksi.')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSAKSI REALISASI (Akses Global Tanpa Prefix Role)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('transaksi')->name('realisasi.')->group(function () {
+        // Resource untuk header, lines, dan attachment
         Route::resource('realisasi-headers', RealisasiHeaderController::class);
+        Route::resource('realisasi-headers.lines', RealisasiLineController::class)->shallow();
+        Route::resource('realisasi-headers.attachments', RealisasiAttachmentController::class)->shallow();
 
-        // Lines lebih enak nested biar jelas header mana
-        Route::resource('realisasi-headers.lines', RealisasiLineController::class)
-            ->shallow(); // biar route edit/delete line ga kepanjangan
+        // Route Tambahan Realisasi
+        Route::get('/index', [RealisasiController::class, 'index'])->name('index'); // Ini jadi realisasi.index
+        Route::get('/create', [RealisasiController::class, 'create'])->name('create');
+        Route::post('/store', [RealisasiController::class, 'store'])->name('store');
+        Route::get('/{id}', [RealisasiController::class, 'show'])->name('show');
 
-        // attachment nested
-        Route::resource('realisasi-headers.attachments', RealisasiAttachmentController::class)
-            ->shallow();
+        // Finalisasi (Akses tetap satu URL, validasi role nanti di Controller)
+        Route::post('/{id}/finalize', [RealisasiController::class, 'finalize'])->name('finalize');
     });
+
+    Route::patch('/realisasi-v2/{id}/return', [RealisasiControllerV2::class, 'returnToPlo'])->name('realisasi-v2.return');
+    Route::resource('realisasi-v2', RealisasiControllerV2::class);
+    // Route::get('realisasi-v2/get-next-no-urut', [App\Http\Controllers\RealisasiV2\RealisasiControllerV2::class, 'getNextNoUrut']);
+    Route::get('realisasi-v2/get-next-no-urut', [App\Http\Controllers\RealisasiV2\RealisasiControllerV2::class, 'getNextNoUrut'])->name('realisasi-v2.get-no-urut');
+    // Aksi Verifikator (Setujui ke Bendahara & Tolak ke PLO)
+    Route::patch('/realisasi-v2/{id}/approve', [RealisasiControllerV2::class, 'approve'])->name('realisasi-v2.approve');
+    Route::patch('/realisasi-v2/{id}/reject', [RealisasiControllerV2::class, 'reject'])->name('realisasi-v2.reject');
+
+    // Aksi PPSPM (Perbaikan error image_cc0051.png)
+    Route::patch('/realisasi-v2/{id}/verify-ppspm', [RealisasiControllerV2::class, 'verifyPpspm'])->name('realisasi-v2.verify-ppspm');
+    // Aksi Bendahara (Finalisasi & Balik ke Verifikator)
+    Route::patch('/realisasi-v2/{id}/finalize', [RealisasiControllerV2::class, 'finalize'])->name('realisasi-v2.finalize');
+    Route::patch('/realisasi-v2/{id}/return-verif', [RealisasiControllerV2::class, 'returnToVerifikator'])->name('realisasi-v2.return-verif'); // TAMBAHKAN INI
+    // Aksi PPK (Hanya Update Status)
+    Route::patch('/realisasi-v2/{id}/verify-ppk', [RealisasiControllerV2::class, 'verifyPpk'])->name('realisasi-v2.verify-ppk');
 });

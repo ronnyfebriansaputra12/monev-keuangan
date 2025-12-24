@@ -38,32 +38,31 @@
 
 <div class="card mb-3">
     <div class="card-body">
-
         <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
 
             <select name="mak_id" class="form-select form-select-sm" style="min-width: 320px;">
                 <option value="">-- Semua MAK (Akun) --</option>
                 @foreach($maks as $m)
-                    <option value="{{ $m->id }}" @selected((string)$makId === (string)$m->id)>
-                        {{ $m->akun?->kode_akun ?? '-' }} - {{ $m->akun?->nama_akun ?? '-' }}
-                        | {{ $m->nama_mak ?? '' }}
-                    </option>
+                <option value="{{ $m->id }}" @selected((string)$makId===(string)$m->id)>
+                    {{ $m->akun?->kode_akun ?? '-' }} - {{ $m->akun?->nama_akun ?? '-' }}
+                    | {{ $m->nama_mak ?? '' }}
+                </option>
                 @endforeach
             </select>
 
             <input type="number"
-                   name="tahun"
-                   class="form-control form-control-sm"
-                   style="width: 120px;"
-                   placeholder="Tahun"
-                   value="{{ $tahun }}">
+                name="tahun"
+                class="form-control form-control-sm"
+                style="width: 120px;"
+                placeholder="Tahun"
+                value="{{ $tahun }}">
 
             <input type="text"
-                   name="search"
-                   class="form-control form-control-sm"
-                   style="width: 280px;"
-                   placeholder="Cari uraian COA"
-                   value="{{ $search }}">
+                name="search"
+                class="form-control form-control-sm"
+                style="width: 280px;"
+                placeholder="Cari uraian COA"
+                value="{{ $search }}">
 
             <button type="submit" class="btn btn-sm btn-secondary">
                 <i class="fa fa-filter"></i> Filter
@@ -73,106 +72,116 @@
                 Reset
             </a>
         </form>
-
     </div>
 </div>
 
 @php
-    /**
-     * Bangun tree dari $coaItems berdasarkan parent_id.
-     * Key = parent_id (null -> root), value = array of items.
-     */
-    $grouped = $coaItems->groupBy(fn($x) => $x->parent_id ?? 0);
+/**
+* Bangun tree dari $coaItems berdasarkan parent_id.
+*/
+$grouped = $coaItems->groupBy(fn($x) => $x->parent_id ?? 0);
 
-    /**
-     * Helper untuk badge level.
-     */
-    $levelBadge = function($lvl){
-        return match((int)$lvl){
-            0 => '<span class="badge bg-secondary">Lv 0</span>',
-            1 => '<span class="badge bg-warning text-dark">Lv 1</span>',
-            2 => '<span class="badge bg-info text-dark">Lv 2</span>',
-            default => '<span class="badge bg-dark">Lv '.$lvl.'</span>',
-        };
-    };
+/**
+* Helper untuk badge level.
+*/
+$levelBadge = function($lvl){
+return match((int)$lvl){
+0 => '<span class="badge bg-secondary">Lv 0</span>',
+1 => '<span class="badge bg-warning text-dark">Lv 1</span>',
+2 => '<span class="badge bg-info text-dark">Lv 2</span>',
+default => '<span class="badge bg-dark">Lv '.$lvl.'</span>',
+};
+};
 
-    /**
-     * Row class berdasarkan level (biar kebaca)
-     */
-    $levelRowClass = function($lvl){
-        return match((int)$lvl){
-            1 => 'table-warning',
-            2 => 'table-info',
-            default => '',
-        };
-    };
+/**
+* Row class berdasarkan level
+*/
+$levelRowClass = function($lvl){
+return match((int)$lvl){
+1 => 'table-warning',
+2 => 'table-info',
+default => '',
+};
+};
 
-    /**
-     * Render tree recursive (tanpa bikin file partial).
-     */
-    $renderTree = function($parentId, $depth = 0) use (&$renderTree, $grouped, $levelBadge, $levelRowClass) {
-        $rows = '';
-        $children = $grouped[$parentId] ?? collect();
+/**
+* Render tree recursive.
+*/
+$renderTree = function($parentId, $depth = 0) use (&$renderTree, $grouped, $levelBadge, $levelRowClass) {
+$rows = '';
+$children = $grouped[$parentId] ?? collect();
 
-        foreach ($children as $c) {
-            $indentPx = $depth * 22; // jarak indent
-            $prefix = $depth > 0 ? '↳ ' : '';
+foreach ($children as $c) {
+$indentPx = $depth * 22;
+$prefix = $depth > 0 ? '↳ ' : '';
 
-            $rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.(int)$c->level.'">';
-            $rows .= '  <td class="text-center"></td>';
+/**
+ * PERBAIKAN: Sisa anggaran dihitung real-time dari Pagu - Realisasi
+ */
+$pagu = (float)($c->jumlah ?? 0);
+$terpakai = (float)($c->realisasi_total ?? 0);
+$sisa = $pagu - $terpakai; 
 
-            $rows .= '  <td>
-                            <div class="fw-bold">'.e($c->mak?->akun?->kode_akun ?? '-').'</div>
-                            <div class="text-muted small">'.e($c->mak?->akun?->nama_akun ?? '-').'</div>
-                        </td>';
+$rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.(int)$c->level.'">';
+    $rows .= ' <td class="text-center"></td>';
 
-            $rows .= '  <td>
-                            <div class="fw-bold">'.e($c->mak?->nama_mak ?? '-').'</div>
-                        </td>';
+    $rows .= ' <td>
+        <div class="fw-bold">'.e($c->mak?->akun?->kode_akun ?? '-').'</div>
+        <div class="text-muted small">'.e($c->mak?->akun?->nama_akun ?? '-').'</div>
+    </td>';
 
-            // uraian + indent + badge
-            $rows .= '  <td>
-                            <div style="padding-left: '.$indentPx.'px">
-                                <span class="me-2">'.$levelBadge($c->level).'</span>
-                                <span class="'.((int)$c->level>0?'fw-semibold':'fw-bold').'">'.$prefix.e($c->uraian).'</span>
-                            </div>
-                        </td>';
+    $rows .= ' <td>
+        <div class="fw-bold">'.e($c->mak?->nama_mak ?? '-').'</div>
+    </td>';
 
-            $rows .= '  <td class="text-end">'.number_format((int)$c->volume, 0, ',', '.').'</td>';
-            $rows .= '  <td>'.e($c->satuan ?? '').'</td>';
-            $rows .= '  <td class="text-end">'.number_format((float)$c->harga_satuan, 0, ',', '.').'</td>';
-            $rows .= '  <td class="text-end fw-bold">'.number_format((float)$c->jumlah, 0, ',', '.').'</td>';
-            $rows .= '  <td>'.e($c->tahun_anggaran).'</td>';
+    $rows .= ' <td>
+        <div style="padding-left: '.$indentPx.'px">
+            <span class="me-2">'.$levelBadge($c->level).'</span>
+            <span class="'.(((int)$c->level > 0) ? 'fw-semibold' : 'fw-bold').'">'.$prefix.e($c->uraian).'</span>
+        </div>
+    </td>';
 
-            // aksi
-            $rows .= '  <td>
-                            <a href="'.route('master.coa-items.edit', $c).'" class="btn btn-sm btn-primary">
-                                <i class="fa fa-edit"></i> Edit
-                            </a>
+    $rows .= ' <td class="text-end">'.number_format((int)($c->volume ?? 0), 0, ',', '.').'</td>';
+    $rows .= ' <td>'.e($c->satuan ?? '').'</td>';
+    $rows .= ' <td class="text-end">'.number_format((float)($c->harga_satuan ?? 0), 0, ',', '.').'</td>';
 
-                            <form action="'.route('master.coa-items.destroy', $c).'"
-                                  method="POST"
-                                  class="d-inline form-delete">
-                                '.csrf_field().method_field('DELETE').'
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    <i class="fa fa-trash"></i> Hapus
-                                </button>
-                            </form>
-                        </td>';
+    // KOLOM PAGU
+    $rows .= ' <td class="text-end fw-bold">
+        <a class="text-decoration-none" href="'.route('realisasi-v2.create', ['coa_item_id' => $c->id]).'">
+            '.number_format($pagu, 0, ',', '.').'
+        </a>
+    </td>';
 
-            $rows .= '</tr>';
+    // KOLOM REALISASI TOTAL
+    $rows .= ' <td class="text-end text-muted italic">
+        '.number_format($terpakai, 0, ',', '.').'
+    </td>';
 
-            // render anak
-            $rows .= $renderTree($c->id, $depth + 1);
-        }
+    // KOLOM SISA ANGGARAN (Warna berubah jika minus)
+    $colorClass = $sisa < 0 ? 'text-danger' : ($sisa == 0 ? 'text-muted' : 'text-success' );
+    $rows .=' <td class="text-end fw-bold ' .$colorClass.'">
+        '.number_format($sisa, 0, ',', '.').'
+    </td>';
 
-        return $rows;
-    };
+    $rows .= ' <td class="text-center">'.e($c->tahun_anggaran ?? '').'</td>';
+
+    $rows .= ' <td>
+        <a href="'.route('master.coa-items.edit', $c).'" class="btn btn-sm btn-primary"><i class="fa fa-edit"></i></a>
+        <form action="'.route('master.coa-items.destroy', $c).'" method="POST" class="d-inline form-delete">
+            '.csrf_field().method_field('DELETE').'
+            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+        </form>
+    </td>';
+
+    $rows .= '</tr>';
+    $rows .= $renderTree($c->id, $depth + 1);
+}
+return $rows;
+};
 @endphp
 
 <div class="card">
     <div class="card-body">
-
         <div class="alert alert-light border mb-3">
             <div class="fw-bold mb-1">Keterangan level</div>
             <div class="small text-muted">
@@ -184,16 +193,18 @@
             <table id="dtCoa" class="table table-striped table-bordered table-hover w-100">
                 <thead>
                     <tr>
-                        <th style="width:60px">No</th>
+                        <th style="width:50px">No</th>
                         <th>Akun</th>
                         <th>MAK</th>
                         <th>Uraian COA</th>
-                        <th style="width:90px">Vol</th>
-                        <th style="width:90px">Sat</th>
-                        <th style="width:160px">Harga Satuan</th>
-                        <th style="width:160px">Jumlah</th>
-                        <th style="width:90px">Tahun</th>
-                        <th style="width:140px">Aksi</th>
+                        <th style="width:50px">Vol</th>
+                        <th style="width:50px">Sat</th>
+                        <th style="width:130px">Harga Satuan</th>
+                        <th style="width:130px">Pagu</th>
+                        <th style="width:130px">Realisasi</th>
+                        <th style="width:130px">Sisa Anggaran</th>
+                        <th style="width:80px">Tahun</th>
+                        <th style="width:100px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -209,33 +220,37 @@
 @push('scripts')
 <script>
     $(function() {
-
-        // DataTables: jangan sorting, karena hirarki pakai urutan + parent-child
         const dt = $('#dtCoa').DataTable({
             pageLength: 25,
             ordering: false,
             responsive: true,
-            drawCallback: function () {
-                // nomor urut per page
+            drawCallback: function() {
                 const api = this.api();
-                api.column(0, { page: 'current' }).nodes().each(function(cell, i) {
+                api.column(0, {
+                    page: 'current'
+                }).nodes().each(function(cell, i) {
                     cell.innerHTML = i + 1;
                 });
             }
         });
 
-        // SweetAlert confirm delete
         $(document).on('submit', '.form-delete', function(e) {
             e.preventDefault();
             const form = this;
-
             swal({
                 title: "Yakin hapus?",
                 text: "Data ini tidak bisa dikembalikan.",
                 icon: "warning",
                 buttons: {
-                    cancel: { text: "Batal", visible: true, className: "btn btn-secondary" },
-                    confirm: { text: "Ya, hapus", className: "btn btn-danger" }
+                    cancel: {
+                        text: "Batal",
+                        visible: true,
+                        className: "btn btn-secondary"
+                    },
+                    confirm: {
+                        text: "Ya, hapus",
+                        className: "btn btn-danger"
+                    }
                 },
                 dangerMode: true,
             }).then(function(willDelete) {
@@ -243,23 +258,11 @@
             });
         });
 
-        // Flash messages
         const msgSuccess = @json(session('success'));
-        const msgError   = @json(session('error'));
-        const msgWarning = @json(session('warning'));
-        const msgInfo    = @json(session('info'));
+        const msgError = @json(session('error'));
 
-        @if ($errors->any())
-            const msgValidation = @json($errors->first());
-        @else
-            const msgValidation = null;
-        @endif
-
-        if (msgValidation) swal({ title: "Validasi gagal", text: msgValidation, icon: "error" });
-        else if (msgError) swal({ title: "Gagal", text: msgError, icon: "error" });
-        else if (msgWarning) swal({ title: "Peringatan", text: msgWarning, icon: "warning" });
-        else if (msgInfo) swal({ title: "Info", text: msgInfo, icon: "info" });
-        else if (msgSuccess) swal({ title: "Berhasil", text: msgSuccess, icon: "success" });
+        if (msgError) swal("Gagal", msgError, "error");
+        else if (msgSuccess) swal("Berhasil", msgSuccess, "success");
     });
 </script>
 @endpush

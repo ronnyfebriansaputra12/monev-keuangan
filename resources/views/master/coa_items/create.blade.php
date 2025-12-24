@@ -113,12 +113,13 @@
                     <thead class="table-light">
                         <tr>
                             <th style="width:60px" class="text-center">No</th>
-                            <th style="min-width:420px">Uraian COA <span class="text-danger">*</span></th>
-                            <th style="width:110px" class="text-center">Level</th>
-                            <th style="width:110px" class="text-center">Vol</th>
-                            <th style="width:140px">Satuan</th>
-                            <th style="width:180px" class="text-end">Harga</th>
-                            <th style="width:180px" class="text-end">Jumlah</th>
+                            <th style="width:150px">Kode</th> {{-- Kolom Baru --}}
+                            <th style="min-width:350px">Uraian COA <span class="text-danger">*</span></th>
+                            <th style="width:100px" class="text-center">Level</th>
+                            <th style="width:100px" class="text-center">Vol</th>
+                            <th style="width:120px">Satuan</th>
+                            <th style="width:160px" class="text-end">Harga</th>
+                            <th style="width:160px" class="text-end">Jumlah</th>
                             <th style="width:80px" class="text-center">Hapus</th>
                         </tr>
                     </thead>
@@ -126,53 +127,38 @@
                         @foreach($rows as $i => $r)
                         <tr>
                             <td class="text-center row-no">{{ $i+1 }}</td>
-
+                            <td>
+                                <input type="text"
+                                    name="items[{{ $i }}][kode_coa_item]"
+                                    class="form-control"
+                                    value="{{ old("items.$i.kode_coa_item", $r['kode_coa_item'] ?? '') }}"
+                                    placeholder="Kode">
+                            </td>
                             <td>
                                 <input type="text"
                                     name="items[{{ $i }}][uraian]"
                                     class="form-control uraian"
                                     value="{{ old("items.$i.uraian", $r['uraian'] ?? '') }}"
-                                    placeholder="Contoh: Pengadaan Pelaporan / > Biaya konsumsi rapat pembahasan"
+                                    placeholder="Uraian item..."
                                     required>
                             </td>
-
                             <td class="text-center">
                                 <span class="badge bg-secondary level-badge">Lv 0</span>
                             </td>
-
                             <td>
-                                <input type="number"
-                                    name="items[{{ $i }}][volume]"
-                                    class="form-control volume text-center"
-                                    value="{{ old("items.$i.volume", $r['volume'] ?? 1) }}"
-                                    min="0">
+                                <input type="number" name="items[{{ $i }}][volume]" class="form-control volume text-center" value="{{ old("items.$i.volume", $r['volume'] ?? 1) }}" min="0">
                             </td>
-
                             <td>
-                                <input type="text"
-                                    name="items[{{ $i }}][satuan]"
-                                    class="form-control satuan"
-                                    style="min-width:120px"
-                                    value="{{ old("items.$i.satuan", $r['satuan'] ?? 'Pcs') }}"
-                                    placeholder="Pcs / Paket / Kali">
+                                <input type="text" name="items[{{ $i }}][satuan]" class="form-control satuan" value="{{ old("items.$i.satuan", $r['satuan'] ?? 'Pcs') }}">
                             </td>
-
                             <td>
-                                <input type="number"
-                                    name="items[{{ $i }}][harga_satuan]"
-                                    class="form-control harga text-end"
-                                    value="{{ old("items.$i.harga_satuan", $r['harga_satuan'] ?? 0) }}"
-                                    min="0" step="1">
+                                <input type="number" name="items[{{ $i }}][harga_satuan]" class="form-control harga text-end" value="{{ old("items.$i.harga_satuan", $r['harga_satuan'] ?? 0) }}" min="0">
                             </td>
-
                             <td class="text-end">
                                 <input type="text" class="form-control text-end jumlah_display" value="0" readonly>
                             </td>
-
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-danger btnRemove">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                <button type="button" class="btn btn-sm btn-danger btnRemove"><i class="fa fa-trash"></i></button>
                             </td>
                         </tr>
                         @endforeach
@@ -262,7 +248,7 @@
         function reIndex() {
             $('#tblItems tbody tr').each(function(idx) {
                 $(this).find('.row-no').text(idx + 1);
-
+                $(this).find('input[name*="[kode_coa_item]"]').attr('name', `items[${idx}][kode_coa_item]`);
                 $(this).find('input[name*="[uraian]"]').attr('name', `items[${idx}][uraian]`);
                 $(this).find('input[name*="[volume]"]').attr('name', `items[${idx}][volume]`);
                 $(this).find('input[name*="[satuan]"]').attr('name', `items[${idx}][satuan]`);
@@ -290,6 +276,7 @@
             $('#tblItems tbody').append(`
             <tr>
                 <td class="text-center row-no">${idx+1}</td>
+                <td><input type="text" name="items[${idx}][kode_coa_item]" class="form-control" placeholder="Kode"></td>
                 <td>
                     <input type="text" name="items[${idx}][uraian]" class="form-control uraian" required
                            placeholder="Contoh: Pengadaan Pelaporan / > Biaya konsumsi rapat pembahasan">
