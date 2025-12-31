@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->enum('role', ['PLO', 'Verifikator', 'Bendahara', 'PPK', 'PPSPM','Superadmin'])->change();
+            $table->string('plo_code', 10)->nullable()->after('role');
+
         });
     }
 

@@ -20,10 +20,9 @@ class CoaItemController extends Controller
         $search = $request->input('search');
 
         $q = CoaItem::with([
-            'subKomponen',
-            'mak.akun'
+            'mak.akun',
+            'subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'
         ])
-            // Langsung ambil data field yang ada di tabel
             ->when($subKomponenId, fn($qq) => $qq->where('sub_komponen_id', (int)$subKomponenId))
             ->when($makId, fn($qq) => $qq->where('mak_id', (int)$makId))
             ->when($tahun, fn($qq) => $qq->where('tahun_anggaran', (int)$tahun))
@@ -35,21 +34,25 @@ class CoaItemController extends Controller
             ->orderBy('urutan')
             ->get();
 
+        // Perhitungan Total hanya untuk item level 0 (agar tidak double count dengan child)
+        // Atau jika struktur database Anda flat, hapus filter level 0.
+        $totalPagu = $coaItems->where('parent_id', null)->sum('jumlah');
+        $totalRealisasi = $coaItems->where('parent_id', null)->sum('realisasi_total');
+        $totalSisa = $totalPagu - $totalRealisasi;
+
         $maks = Mak::with('akun')->orderBy('akun_id')->get();
-        $subKomponens = SubKomponen::orderBy('kode_subkomponen')->get();
 
         return view('master.coa_items.index', compact(
             'coaItems',
             'maks',
-            'subKomponens',
-            'subKomponenId',
             'makId',
             'tahun',
-            'search'
+            'search',
+            'totalPagu',
+            'totalRealisasi',
+            'totalSisa'
         ));
     }
-
-
     public function create()
     {
         $subKomponens = SubKomponen::with('komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker')
@@ -145,6 +148,24 @@ class CoaItemController extends Controller
         return redirect()
             ->route('master.coa-items.index')
             ->with('success', 'COA berhasil ditambahkan (bulk).');
+    }
+
+    public function showRealisasi($id)
+    {
+        // Load CoaItem beserta seluruh silsilah ke atas (Hierarchy)
+        // dan silsilah ke samping (MAK & Akun)
+        $coaItem = CoaItem::with([
+            'mak.akun',
+            'subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'
+        ])->findOrFail($id);
+
+        // Ambil data riwayat realisasi
+        // Kita arahkan ke model Realisasi (pastikan model ini merujuk ke tabel yang benar)
+        $realisasis = \App\Models\Realisasi::where('coa_item_id', $id)
+            ->orderBy('tgl_kuitansi', 'desc')
+            ->get();
+
+        return view('master.coa_items.show-realisasi', compact('coaItem', 'realisasis'));
     }
 
     /**

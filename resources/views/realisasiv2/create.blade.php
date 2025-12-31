@@ -51,9 +51,8 @@
                                         <label class="form-label">Sumber Anggaran</label>
                                         <select name="sumber_anggaran" id="sumber_anggaran" class="form-select" required>
                                             <option value="">-- Pilih --</option>
-                                            <option value="RM" {{ old('sumber_anggaran') == 'RM' ? 'selected' : '' }}>RM (Rupiah Murni)</option>
-                                            <option value="PNBP" {{ old('sumber_anggaran') == 'PNBP' ? 'selected' : '' }}>PNBP</option>
-                                            <option value="PL" {{ old('sumber_anggaran') == 'PL' ? 'selected' : '' }}>PL</option>
+                                            <option value="BGN" {{ old('sumber_anggaran') == 'BGN' ? 'selected' : '' }}>BGN</option>
+                                            <option value="GF" {{ old('sumber_anggaran') == 'GF' ? 'selected' : '' }}>GF</option>
                                             <option value="GUP" {{ old('sumber_anggaran') == 'GUP' ? 'selected' : '' }}>GUP</option>
                                         </select>
                                     </div>

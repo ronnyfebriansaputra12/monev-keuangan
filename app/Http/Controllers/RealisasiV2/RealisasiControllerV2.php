@@ -137,7 +137,8 @@ class RealisasiControllerV2 extends Controller
             'Tambah Realisasi',
             "User (PLO) membuat realisasi baru: {$realisasi->nama_kegiatan} dengan nominal Rp " . number_format($realisasi->jumlah, 0, ',', '.'),
             'NULL', // Status awal memang belum ada
-            $realisasi->status_berkas ?? 'Draft'
+            $realisasi->status_berkas ?? 'Draft',
+            $realisasi->id
         );
 
         return redirect()->route('realisasi-v2.index', ['coa_item_id' => $realisasi->coa_item_id])
@@ -262,7 +263,8 @@ class RealisasiControllerV2 extends Controller
             $aktivitasLog,
             "User memperbarui data pada ID #{$id}." . (isset($data['gup']) ? " (GUP: {$data['gup']})" : ""),
             $statusAwal,
-            $realisasi->status_berkas
+            $realisasi->status_berkas,
+            $realisasi->id
         );
 
         return redirect()->route('realisasi-v2.index', ['status_berkas' => $realisasi->status_berkas])
@@ -355,7 +357,7 @@ class RealisasiControllerV2 extends Controller
         ]);
 
         // LOGGING: Persetujuan Verifikator
-        $this->logActivity('Setujui Berkas', "Verifikator menyetujui berkas ID #{$id} dan meneruskan ke Bendahara", $statusAwal, 'Terverifikasi');
+        $this->logActivity('Setujui Berkas', "Verifikator menyetujui berkas ID #{$id} dan meneruskan ke Bendahara", $statusAwal, 'Terverifikasi', $id);
 
         return redirect()->route('realisasi-v2.index')->with('success', 'Berkas berhasil diverifikasi.');
     }

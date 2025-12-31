@@ -58,6 +58,14 @@
           </a>
           <div class="collapse {{ Request::is('master*') ? 'show' : '' }}" id="masterData">
             <ul class="nav nav-collapse">
+              {{-- Tambahan Menu User --}}
+              <li class="{{ Route::is('master.users.*') ? 'active' : '' }}">
+                <a href="{{ route('master.users.index') }}">
+                  <span class="sub-item">User / Pengguna</span>
+                </a>
+              </li>
+              <hr class="my-1 border-secondary">
+              
               <li class="{{ Route::is('master.satkers.*') ? 'active' : '' }}"><a href="{{ route('master.satkers.index') }}"><span class="sub-item">Satker</span></a></li>
               <li class="{{ Route::is('master.programs.*') ? 'active' : '' }}"><a href="{{ route('master.programs.index') }}"><span class="sub-item">Program</span></a></li>
               <li class="{{ Route::is('master.kegiatans.*') ? 'active' : '' }}"><a href="{{ route('master.kegiatans.index') }}"><span class="sub-item">Kegiatan</span></a></li>
@@ -74,6 +82,8 @@
         </li>
         @endif
 
+        {{-- ... (Menu Transaksi, Verifikator, dll tetap sama) ... --}}
+        
         {{-- MENU TRANSAKSI PLO --}}
         @if(in_array(Auth::user()->role, ['PLO', 'Superadmin']))
         @php $isPloActive = Request::is('realisasi-v2*') && !Request::has('status_berkas'); @endphp

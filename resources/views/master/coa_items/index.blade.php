@@ -2,23 +2,29 @@
 
 @section('page-header')
 <div class="page-header mb-4">
-    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 w-100">
         <div>
-            <h4 class="page-title mb-1">COA</h4>
+            <h4 class="page-title mb-1">Chart of Accounts (COA)</h4>
             <ul class="breadcrumbs mb-0">
                 <li class="nav-home">
-                    <a href="#"><i class="icon-home"></i></a>
+                    <a href="{{ route('dashboard') }}"><i class="icon-home"></i></a>
                 </li>
                 <li class="separator"><i class="icon-arrow-right"></i></li>
                 <li class="nav-item"><a href="#">Master Data</a></li>
                 <li class="separator"><i class="icon-arrow-right"></i></li>
-                <li class="nav-item"><span>COA</span></li>
+                <li class="nav-item"><span>COA Items</span></li>
             </ul>
         </div>
 
-        <a href="{{ route('master.coa-items.create') }}" class="btn btn-primary btn-sm">
-            <i class="fa fa-plus"></i> Tambah COA (Bulk)
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('import.anggaran.view') }}" class="btn btn-success btn-round btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Import Anggaran
+            </a>
+
+            <a href="{{ route('master.coa-items.create') }}" class="btn btn-primary btn-round btn-sm">
+                <i class="fa fa-plus me-1"></i> Tambah COA (Manual)
+            </a>
+        </div>
     </div>
 </div>
 @endsection
@@ -35,6 +41,67 @@
     </ul>
 </div>
 @endif
+
+{{-- Widget Statistik Anggaran --}}
+<div class="row mb-3">
+    <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-icon">
+                        <div class="icon-big text-center icon-primary bubble-shadow-small">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                    <div class="col col-stats ms-3 ms-sm-0">
+                        <div class="numbers">
+                            <p class="card-category">Total Pagu</p>
+                            <h4 class="card-title text-primary">Rp {{ number_format($totalPagu ?? 0, 0, ',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-icon">
+                        <div class="icon-big text-center icon-secondary bubble-shadow-small">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                    </div>
+                    <div class="col col-stats ms-3 ms-sm-0">
+                        <div class="numbers">
+                            <p class="card-category">Total Realisasi</p>
+                            <h4 class="card-title text-secondary">Rp {{ number_format($totalRealisasi ?? 0, 0, ',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card card-stats card-round">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-icon">
+                        <div class="icon-big text-center icon-success bubble-shadow-small">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="col col-stats ms-3 ms-sm-0">
+                        <div class="numbers">
+                            <p class="card-category">Sisa Anggaran</p>
+                            <h4 class="card-title text-success">Rp {{ number_format($totalSisa ?? 0, 0, ',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -82,6 +149,21 @@
 $grouped = $coaItems->groupBy(fn($x) => $x->parent_id ?? 0);
 
 /**
+* Helper Label Kode Hierarchy
+* LOGIKA BARU: Jika Lv 0 maka tampilkan COA
+*/
+$getLabelKode = function($c) {
+// Jika Level 0, tampilkan COA sesuai permintaan
+if ($c->level == 0) return 'COA';
+
+// Jika level lainnya, tetap gunakan logika hierarchy sebelumnya
+if ($c->level == 1) return 'SUB JUDUL';
+if ($c->level == 2) return 'COA';
+
+return $c->kode ?? '-';
+};
+
+/**
 * Helper untuk badge level.
 */
 $levelBadge = function($lvl){
@@ -105,30 +187,34 @@ default => '',
 };
 
 /**
-* Render tree recursive.
+* Render tree recursive
 */
-$renderTree = function($parentId, $depth = 0) use (&$renderTree, $grouped, $levelBadge, $levelRowClass) {
+$renderTree = function($parentId, $depth = 0) use (&$renderTree, $grouped, $levelBadge, $levelRowClass, $getLabelKode) {
 $rows = '';
 $children = $grouped[$parentId] ?? collect();
 
 foreach ($children as $c) {
-$indentPx = $depth * 22;
-$prefix = $depth > 0 ? '↳ ' : '';
+$currentLevel = (int)$c->level;
+$indentPx = $currentLevel * 30;
+$prefix = $currentLevel > 0 ? '↳ ' : '';
 
-/**
- * PERBAIKAN: Sisa anggaran dihitung real-time dari Pagu - Realisasi
- */
 $pagu = (float)($c->jumlah ?? 0);
 $terpakai = (float)($c->realisasi_total ?? 0);
-$sisa = $pagu - $terpakai; 
+$sisa = $pagu - $terpakai;
+$kodeTampil = $getLabelKode($c);
 
-$rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.(int)$c->level.'">';
+$rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.$currentLevel.'">';
     $rows .= ' <td class="text-center"></td>';
 
-    $rows .= ' <td>
-        <div class="fw-bold">'.e($c->mak?->akun?->kode_akun ?? '-').'</div>
-        <div class="text-muted small">'.e($c->mak?->akun?->nama_akun ?? '-').'</div>
-    </td>';
+    // KOLOM AKUN: Menampilkan "COA" untuk item detail/child
+    $rows .= ' <td>';
+        if($c->level > 0 || $c->catatan_desk == 'COA') {
+        $rows .= '<div class="fw-bold text-info">COA</div>';
+        } else {
+        $rows .= '<div class="fw-bold">'.e($c->mak?->akun?->kode_akun ?? '-').'</div>';
+        $rows .= '<div class="text-muted small">'.e($c->mak?->akun?->nama_akun ?? '-').'</div>';
+        }
+        $rows .= ' </td>';
 
     $rows .= ' <td>
         <div class="fw-bold">'.e($c->mak?->nama_mak ?? '-').'</div>
@@ -137,44 +223,59 @@ $rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.(int)$c->level
     $rows .= ' <td>
         <div style="padding-left: '.$indentPx.'px">
             <span class="me-2">'.$levelBadge($c->level).'</span>
-            <span class="'.(((int)$c->level > 0) ? 'fw-semibold' : 'fw-bold').'">'.$prefix.e($c->uraian).'</span>
+            <span class="'.($currentLevel > 0 ? 'fw-semibold' : 'fw-bold').'">'.$prefix.e($c->uraian).'</span>
         </div>
     </td>';
 
+    // KOLOM KODE: Sekarang menampilkan "COA" jika baris tersebut adalah Lv 0
+    $rows .= ' <td class="text-center fw-bold text-primary">'.e($kodeTampil).'</td>';
+
     $rows .= ' <td class="text-end">'.number_format((int)($c->volume ?? 0), 0, ',', '.').'</td>';
-    $rows .= ' <td>'.e($c->satuan ?? '').'</td>';
+    $rows .= ' <td class="text-center">'.e($c->satuan ?? '').'</td>';
     $rows .= ' <td class="text-end">'.number_format((float)($c->harga_satuan ?? 0), 0, ',', '.').'</td>';
 
-    // KOLOM PAGU
     $rows .= ' <td class="text-end fw-bold">
         <a class="text-decoration-none" href="'.route('realisasi-v2.create', ['coa_item_id' => $c->id]).'">
             '.number_format($pagu, 0, ',', '.').'
         </a>
     </td>';
 
-    // KOLOM REALISASI TOTAL
     $rows .= ' <td class="text-end text-muted italic">
         '.number_format($terpakai, 0, ',', '.').'
     </td>';
 
-    // KOLOM SISA ANGGARAN (Warna berubah jika minus)
-    $colorClass = $sisa < 0 ? 'text-danger' : ($sisa == 0 ? 'text-muted' : 'text-success' );
-    $rows .=' <td class="text-end fw-bold ' .$colorClass.'">
+    $colorClass = $sisa < 0 ? 'text-danger' : ($sisa==0 ? 'text-muted' : 'text-success' );
+        $rows .=' <td class="text-end fw-bold ' .$colorClass.'">
         '.number_format($sisa, 0, ',', '.').'
-    </td>';
+        </td>';
 
-    $rows .= ' <td class="text-center">'.e($c->tahun_anggaran ?? '').'</td>';
+        $rows .= ' <td class="text-center">'.e($c->tahun_anggaran ?? '').'</td>';
 
-    $rows .= ' <td>
-        <a href="'.route('master.coa-items.edit', $c).'" class="btn btn-sm btn-primary"><i class="fa fa-edit"></i></a>
-        <form action="'.route('master.coa-items.destroy', $c).'" method="POST" class="d-inline form-delete">
-            '.csrf_field().method_field('DELETE').'
-            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-        </form>
-    </td>';
+        $rows .= ' <td>
+            <div class="d-flex gap-1">
+                <a href="'.route('master.coa-items.realisasi', $c->id).'"
+                    class="btn btn-sm btn-info"
+                    title="Detail Realisasi">
+                    <i class="fas fa-list-ul"></i>
+                </a>
 
-    $rows .= '</tr>';
-    $rows .= $renderTree($c->id, $depth + 1);
+                <a href="'.route('master.coa-items.edit', $c).'"
+                    class="btn btn-sm btn-primary"
+                    title="Edit COA">
+                    <i class="fa fa-edit"></i>
+                </a>
+
+                <form action="'.route('master.coa-items.destroy', $c).'" method="POST" class="d-inline form-delete">
+                    '.csrf_field().method_field('DELETE').'
+                    <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </td>';
+
+        $rows .= '</tr>';
+$rows .= $renderTree($c->id, $depth + 1);
 }
 return $rows;
 };
@@ -197,12 +298,13 @@ return $rows;
                         <th>Akun</th>
                         <th>MAK</th>
                         <th>Uraian COA</th>
+                        <th style="width:120px">Kode</th>
                         <th style="width:50px">Vol</th>
                         <th style="width:50px">Sat</th>
-                        <th style="width:130px">Harga Satuan</th>
-                        <th style="width:130px">Pagu</th>
-                        <th style="width:130px">Realisasi</th>
-                        <th style="width:130px">Sisa Anggaran</th>
+                        <th style="width:120px">Harga Satuan</th>
+                        <th style="width:120px">Pagu</th>
+                        <th style="width:120px">Realisasi</th>
+                        <th style="width:120px">Sisa Anggaran</th>
                         <th style="width:80px">Tahun</th>
                         <th style="width:100px">Aksi</th>
                     </tr>
@@ -221,7 +323,7 @@ return $rows;
 <script>
     $(function() {
         const dt = $('#dtCoa').DataTable({
-            pageLength: 25,
+            pageLength: 50,
             ordering: false,
             responsive: true,
             drawCallback: function() {

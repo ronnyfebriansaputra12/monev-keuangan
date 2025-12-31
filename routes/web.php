@@ -23,12 +23,17 @@ use App\Http\Controllers\Transaksi\{
 };
 use App\Http\Controllers\Transaksi\Realisasi\RealisasiController;
 use App\Http\Controllers\RealisasiV2\RealisasiControllerV2;
+use App\Http\Controllers\BudgetImportController;
+use App\Http\Controllers\Master\UserController;
+
+
 
 /*
 |--------------------------------------------------------------------------
 | Guest Routes
 |--------------------------------------------------------------------------
 */
+
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'index'])->name('login');
@@ -42,6 +47,12 @@ Route::middleware('guest')->group(function () {
 */
 Route::middleware('auth')->group(function () {
 
+    Route::prefix('master')->name('master.')->group(function () {
+        Route::resource('users', UserController::class);
+    });
+
+    Route::post('/import-anggaran', [BudgetImportController::class, 'import'])->name('import.anggaran');
+    Route::get('/master/coa-items/import', [BudgetImportController::class, 'showForm'])->name('import.anggaran.view');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     // Dashboard Utama (Satu Route)
@@ -72,6 +83,8 @@ Route::middleware('auth')->group(function () {
         Route::get('coa-items-bulk/edit', [CoaItemController::class, 'bulkEdit'])->name('coa-items.bulk-edit');
         Route::post('coa-items-bulk/update', [CoaItemController::class, 'bulkUpdate'])->name('coa-items.bulk-update');
     });
+    Route::get('master/coa-items/{id}/realisasi', [CoaItemController::class, 'showRealisasi'])->name('master.coa-items.realisasi');
+
 
     /*
     |--------------------------------------------------------------------------

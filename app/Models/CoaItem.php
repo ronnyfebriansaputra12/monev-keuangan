@@ -73,7 +73,8 @@ class CoaItem extends Model
     // ✅ relasi ke realisasi (baru)
     public function realisasiHeaders(): HasMany
     {
-        return $this->hasMany(RealisasiHeader::class, 'coa_item_id');
+        // Gunakan foreign key 'coa_item_id' sesuai query di controller Anda
+        return $this->hasMany(Realisasi::class, 'coa_item_id');
     }
 
     /**
