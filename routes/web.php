@@ -107,10 +107,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/finalize', [RealisasiController::class, 'finalize'])->name('finalize');
     });
 
+    Route::get('realisasi-v2/get-next-no-urut', [RealisasiControllerV2::class, 'getNextNoUrut'])->name('realisasi-v2.get-next-no-urut');
+
+    Route::get('realisasi-v2/export-excel', [RealisasiControllerV2::class, 'exportExcel'])->name('realisasi-v2.export-excel');
+
     Route::patch('/realisasi-v2/{id}/return', [RealisasiControllerV2::class, 'returnToPlo'])->name('realisasi-v2.return');
     Route::resource('realisasi-v2', RealisasiControllerV2::class);
     // Route::get('realisasi-v2/get-next-no-urut', [App\Http\Controllers\RealisasiV2\RealisasiControllerV2::class, 'getNextNoUrut']);
-    Route::get('realisasi-v2/get-next-no-urut', [App\Http\Controllers\RealisasiV2\RealisasiControllerV2::class, 'getNextNoUrut'])->name('realisasi-v2.get-no-urut');
+    // Route::get('realisasi-v2/get-next-no-urut', [App\Http\Controllers\RealisasiV2\RealisasiControllerV2::class, 'getNextNoUrut'])->name('realisasi-v2.get-no-urut');
     // Aksi Verifikator (Setujui ke Bendahara & Tolak ke PLO)
     Route::patch('/realisasi-v2/{id}/approve', [RealisasiControllerV2::class, 'approve'])->name('realisasi-v2.approve');
     Route::patch('/realisasi-v2/{id}/reject', [RealisasiControllerV2::class, 'reject'])->name('realisasi-v2.reject');
@@ -122,4 +126,5 @@ Route::middleware('auth')->group(function () {
     Route::patch('/realisasi-v2/{id}/return-verif', [RealisasiControllerV2::class, 'returnToVerifikator'])->name('realisasi-v2.return-verif'); // TAMBAHKAN INI
     // Aksi PPK (Hanya Update Status)
     Route::patch('/realisasi-v2/{id}/verify-ppk', [RealisasiControllerV2::class, 'verifyPpk'])->name('realisasi-v2.verify-ppk');
+    Route::get('realisasi-v2/export-excel', [RealisasiControllerV2::class, 'exportExcel'])->name('realisasi-v2.export-excel');
 });

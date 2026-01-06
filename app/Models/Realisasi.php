@@ -42,10 +42,10 @@ class Realisasi extends Model
         'pph21',
         'pph22',
         'pph23',
+        'pph_final', // Pastikan ini ada
         'npwp',
         'tgl_kuitansi',
         'status_berkas_line',
-        'pph_final',
         'nomor_kuitansi',
         'lampiran'
     ];
@@ -59,10 +59,12 @@ class Realisasi extends Model
         'pph21' => 'decimal:2',
         'pph22' => 'decimal:2',
         'pph23' => 'decimal:2',
+        'pph_final' => 'decimal:2',
         'finalized_at' => 'datetime',
-        'lampiran' => 'array',
+        'lampiran' => 'array', // Krusial untuk menyimpan list berkas
     ];
 
+    // --- Relasi ---
 
     public function satker(): BelongsTo
     {
@@ -79,10 +81,8 @@ class Realisasi extends Model
         return $this->belongsTo(Mak::class, 'mak_id');
     }
 
-    // Relasi log dan attachment biasanya tetap mengacu ke ID utama model ini
     public function logs(): HasMany
     {
-        // Gunakan 'id_realisasi' sebagai foreign key, bukan 'realisasi_id'
         return $this->hasMany(ActivityLog::class, 'realisasi_id')->latest();
     }
 
@@ -90,29 +90,45 @@ class Realisasi extends Model
     {
         return $this->hasMany(RealisasiAttachment::class, 'realisasi_id');
     }
-
+    // Tambahkan ini di Model Realisasi.php
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
     // --- Booted Logic ---
 
     protected static function booted(): void
     {
         static::saving(function (Realisasi $realisasi) {
-            // Default nilai pajak agar tidak null
-            $realisasi->ppn   = $realisasi->ppn ?? 0;
-            $realisasi->pph21 = $realisasi->pph21 ?? 0;
-            $realisasi->pph22 = $realisasi->pph22 ?? 0;
-            $realisasi->pph23 = $realisasi->pph23 ?? 0;
+            // Default nilai pajak agar tidak null saat perhitungan
+            $realisasi->ppn       = $realisasi->ppn ?? 0;
+            $realisasi->pph21     = $realisasi->pph21 ?? 0;
+            $realisasi->pph22     = $realisasi->pph22 ?? 0;
+            $realisasi->pph23     = $realisasi->pph23 ?? 0;
+            $realisasi->pph_final = $realisasi->pph_final ?? 0;
+
+            // Otomatis update field 'total' dari 'jumlah' bruto jika tidak diisi manual
+            if (empty($realisasi->total)) {
+                $realisasi->total = $realisasi->jumlah;
+            }
         });
     }
 
-    // --- Accessors (Logic Perhitungan) ---
+    // --- Accessors (Logic Perhitungan Pajak Lengkap) ---
 
+    /**
+     * Total semua jenis PPh
+     */
     public function getPphTotalAttribute(): string
     {
-        $pph = (float)$this->pph21 + (float)$this->pph22 + (float)$this->pph23;
+        $pph = (float)$this->pph21 + (float)$this->pph22 + (float)$this->pph23 + (float)$this->pph_final;
         return number_format($pph, 2, '.', '');
     }
 
+    /**
+     * Jumlah Bruto + PPN
+     */
     public function getJumlahKotorAttribute(): string
     {
         $jumlah = (float)$this->jumlah;
@@ -121,14 +137,25 @@ class Realisasi extends Model
     }
 
     /**
-     * Total bersih = jumlah + ppn - total pph
+     * Total bersih yang diterima (Bruto + PPN - Semua PPh)
      */
     public function getTotalBersihAttribute(): string
     {
         $jumlah = (float)$this->jumlah;
         $ppn = (float)$this->ppn;
-        $pph = (float)$this->pph21 + (float)$this->pph22 + (float)$this->pph23;
+        $totalPph = (float)$this->pph_total;
 
-        return number_format($jumlah + $ppn - $pph, 2, '.', '');
+        return number_format($jumlah + $ppn - $totalPph, 2, '.', '');
+    }
+
+    /**
+     * Helper untuk mengecek apakah berkas tertentu sudah diupload
+     * Contoh penggunaan: $realisasi->has_file('Kwitansi Hotel')
+     */
+    public function hasFile($namaBerkas): bool
+    {
+        if (!$this->lampiran || !is_array($this->lampiran)) return false;
+
+        return collect($this->lampiran)->contains('nama_berkas', $namaBerkas);
     }
 }

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,51 +16,86 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Contoh User PLO
-        \App\Models\User::updateOrCreate([
-            'name' => 'Petugas DMS',
-            'email' => 'plo.dms@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'PLO',
-            'plo_code' => 'DMS',
-        ]);
+        // --- DATA USER PLO (Sesuai Inisial) ---
+        $ploUsers = [
+            [
+                'name'     => 'Dimas',
+                'email'    => 'dimas@example.com',
+                'plo_code' => 'D',
+            ],
+            [
+                'name'     => 'Yanda',
+                'email'    => 'yanda@example.com',
+                'plo_code' => 'Y',
+            ],
+            [
+                'name'     => 'Ghea',
+                'email'    => 'ghea@example.com',
+                'plo_code' => 'G',
+            ],
+            [
+                'name'     => 'Komar',
+                'email'    => 'komar@example.com',
+                'plo_code' => 'K',
+            ],
+            [
+                'name'     => 'Lusi',
+                'email'    => 'lusi@example.com',
+                'plo_code' => 'L',
+            ],
+        ];
 
-        // Contoh User Verifikator
-        \App\Models\User::updateOrCreate([
-            'name' => 'Verifikator Utama',
-            'email' => 'verifikator@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'Verifikator',
-            'plo_code' => null, // Verifikator tidak butuh plo_code
-        ]);
+        foreach ($ploUsers as $user) {
+            User::updateOrCreate(
+                ['email' => $user['email']], // Cek berdasarkan email
+                [
+                    'name'     => $user['name'],
+                    'password' => Hash::make('password'),
+                    'role'     => 'PLO',
+                    'plo_code' => $user['plo_code'],
+                ]
+            );
+        }
 
-        \App\Models\User::updateOrCreate([
-            'name' => 'Bendahara Utama',
-            'email' => 'bendahara@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'Bendahara',
-            'plo_code' => null, // Bendahara tidak butuh plo_code
-        ]);
-        \App\Models\User::updateOrCreate([
-            'name' => 'PPK',
-            'email' => 'ppk@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'PPK',
-            'plo_code' => null, // Bendahara tidak butuh plo_code
-        ]);
-        \App\Models\User::updateOrCreate([
-            'name' => 'PPSPM',
-            'email' => 'ppspm@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'PPSPM',
-            'plo_code' => null, // Bendahara tidak butuh plo_code
-        ]);
-        \App\Models\User::updateOrCreate([
-            'name' => 'superadmin',
-            'email' => 'superadmin@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'Superadmin',
-            'plo_code' => null, // Bendahara tidak butuh plo_code
-        ]);
+        // --- DATA USER ROLE LAIN ---
+        $otherUsers = [
+            [
+                'name'  => 'Verifikator Utama',
+                'email' => 'verifikator@example.com',
+                'role'  => 'Verifikator',
+            ],
+            [
+                'name'  => 'Bendahara Utama',
+                'email' => 'bendahara@example.com',
+                'role'  => 'Bendahara',
+            ],
+            [
+                'name'  => 'PPK Utama',
+                'email' => 'ppk@example.com',
+                'role'  => 'PPK',
+            ],
+            [
+                'name'  => 'PPSPM Utama',
+                'email' => 'ppspm@example.com',
+                'role'  => 'PPSPM',
+            ],
+            [
+                'name'  => 'Superadmin Utama',
+                'email' => 'superadmin@example.com',
+                'role'  => 'Superadmin',
+            ],
+        ];
+
+        foreach ($otherUsers as $user) {
+            User::updateOrCreate(
+                ['email' => $user['email']],
+                [
+                    'name'     => $user['name'],
+                    'password' => Hash::make('password'),
+                    'role'     => $user['role'],
+                    'plo_code' => null,
+                ]
+            );
+        }
     }
 }

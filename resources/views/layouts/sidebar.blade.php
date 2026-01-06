@@ -2,8 +2,9 @@
   <div class="sidebar-logo">
     <div class="logo-header" data-background-color="dark">
       <a href="{{ route('dashboard') }}" class="logo d-flex align-items-center">
-        <div class="avatar-sm me-2 bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm">
-          <i class="fas fa-chart-pie text-primary" style="font-size: 14px;"></i>
+        <div class="logo-img-container me-3">
+          <img src="{{ asset('assets/logo1.png') }}" alt="Logo Monitoring"
+            style="width: 50px; height: 50px; object-fit: contain;">
         </div>
 
         <div class="info-logo">
@@ -65,7 +66,7 @@
                 </a>
               </li>
               <hr class="my-1 border-secondary">
-              
+
               <li class="{{ Route::is('master.satkers.*') ? 'active' : '' }}"><a href="{{ route('master.satkers.index') }}"><span class="sub-item">Satker</span></a></li>
               <li class="{{ Route::is('master.programs.*') ? 'active' : '' }}"><a href="{{ route('master.programs.index') }}"><span class="sub-item">Program</span></a></li>
               <li class="{{ Route::is('master.kegiatans.*') ? 'active' : '' }}"><a href="{{ route('master.kegiatans.index') }}"><span class="sub-item">Kegiatan</span></a></li>
@@ -83,7 +84,7 @@
         @endif
 
         {{-- ... (Menu Transaksi, Verifikator, dll tetap sama) ... --}}
-        
+
         {{-- MENU TRANSAKSI PLO --}}
         @if(in_array(Auth::user()->role, ['PLO', 'Superadmin']))
         @php $isPloActive = Request::is('realisasi-v2*') && !Request::has('status_berkas'); @endphp

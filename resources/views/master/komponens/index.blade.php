@@ -1,35 +1,86 @@
 @extends('layouts.index')
 
+{{-- Tambahkan CSS DataTables di head melalui push atau langsung --}}
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<style>
+    .filter-section {
+        background: #ffffff;
+        border: 1px solid #e3e6f0;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
+    }
+
+    .filter-section .form-control-sm, 
+    .filter-section .form-select-sm,
+    .filter-section .btn-sm {
+        height: 38px;
+        border-radius: 8px;
+    }
+
+    #dtKomponen thead th {
+        background-color: #f8f9fc;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        color: #4e73df;
+        border-bottom: 2px solid #e3e6f0;
+        vertical-align: middle;
+    }
+
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
+    }
+
+    code {
+        color: #e74a3b;
+        background: #f8f9fc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    .text-structure {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #858796;
+    }
+</style>
+@endpush
+
 @section('page-header')
 <div class="page-header mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-        <h4 class="page-title mb-0">Master Komponen</h4>
-
-        <a href="{{ route('master.komponens.create') }}" class="btn btn-primary btn-sm">
-            <i class="fa fa-plus"></i> Tambah Komponen
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="page-title mb-1">Master Komponen</h4>
+            <ul class="breadcrumbs bg-transparent p-0 m-0 d-flex align-items-center" style="list-style: none; gap: 8px;">
+                <li class="nav-home"><a href="#"><i class="fas fa-home text-primary"></i></a></li>
+                <li class="separator text-muted"><i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i></li>
+                <li class="nav-item"><a href="#" class="text-muted">Master Data</a></li>
+                <li class="separator text-muted"><i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i></li>
+                <li class="nav-item"><span class="font-weight-bold text-dark">Komponen</span></li>
+            </ul>
+        </div>
+        <a href="{{ route('master.komponens.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="fas fa-plus-circle mr-2"></i> Tambah Komponen
         </a>
     </div>
-
-    <ul class="breadcrumbs mb-0">
-        <li class="nav-home"><a href="#"><i class="icon-home"></i></a></li>
-        <li class="separator"><i class="icon-arrow-right"></i></li>
-        <li class="nav-item"><a href="#">Master Data</a></li>
-        <li class="separator"><i class="icon-arrow-right"></i></li>
-        <li class="nav-item"><span>Komponen</span></li>
-    </ul>
 </div>
 @endsection
 
 @section('content')
 
-{{-- Filter --}}
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="GET" class="row g-2 align-items-end">
-
-            <div class="col-md-5">
-                <label class="form-label mb-1">Rincian Output</label>
-                <select name="rincian_output_id" class="form-select form-select-sm">
+{{-- Filter Section --}}
+<div class="filter-section border-0 shadow-sm">
+    <form method="GET" action="{{ route('master.komponens.index') }}">
+        <div class="row align-items-end g-3">
+            <div class="col-md-4">
+                <label class="small font-weight-bold text-uppercase text-muted mb-2 d-block">Rincian Output (RO)</label>
+                <select name="rincian_output_id" class="form-select form-select-sm shadow-none border-gray-300">
                     <option value="">-- Semua Rincian Output --</option>
                     @foreach($rincianOutputs as $ro)
                         <option value="{{ $ro->id }}" @selected((string)$roId===(string)$ro->id)>
@@ -41,70 +92,87 @@
             </div>
 
             <div class="col-md-2">
-                <label class="form-label mb-1">Tahun</label>
-                <input type="number" name="tahun"
-                       class="form-control form-control-sm"
-                       value="{{ $tahun }}" min="2000" max="2100">
+                <label class="small font-weight-bold text-uppercase text-muted mb-2 d-block">Tahun</label>
+                <input type="number" name="tahun" class="form-control form-control-sm shadow-none border-gray-300" 
+                       value="{{ $tahun }}" min="2000" max="2100" placeholder="Tahun">
             </div>
 
             <div class="col-md-3">
-                <label class="form-label mb-1">Pencarian</label>
-                <input type="text" name="search"
-                       class="form-control form-control-sm"
-                       placeholder="Cari kode / nama"
-                       value="{{ $search }}">
+                <label class="small font-weight-bold text-uppercase text-muted mb-2 d-block">Pencarian Cepat</label>
+                <div class="input-group input-group-sm">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text bg-white border-right-0 rounded-left-8"><i class="fas fa-search text-muted"></i></span>
+                    </div>
+                    <input type="text" name="search" class="form-control border-left-0 shadow-none" 
+                           placeholder="Cari kode atau nama..." value="{{ $search }}">
+                </div>
             </div>
 
-            <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-sm btn-secondary w-100">
-                    <i class="fa fa-filter"></i> Filter
-                </button>
-                <a href="{{ route('master.komponens.index') }}"
-                   class="btn btn-sm btn-light w-100">
-                    Reset
-                </a>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-secondary flex-fill shadow-none">
+                        <i class="fas fa-filter mr-1"></i> Filter
+                    </button>
+                    <a href="{{ route('master.komponens.index') }}" class="btn btn-sm btn-light border flex-fill text-center">
+                        <i class="fas fa-undo mr-1"></i> Reset
+                    </a>
+                </div>
             </div>
-
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
-{{-- Table --}}
-<div class="card">
-    <div class="card-body">
+{{-- Table Section --}}
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
         <div class="table-responsive">
-            <table id="dtKomponen" class="table table-striped table-bordered table-hover w-100">
-                <thead class="thead-light">
+            <table id="dtKomponen" class="table table-hover w-100">
+                <thead>
                     <tr>
-                        <th style="width:60px">No</th>
+                        <th class="text-center" style="width:50px">No</th>
                         <th>Satker</th>
-                        <th>Kode RO</th>
-                        <th>Kode Komponen</th>
+                        <th class="text-center" style="width:100px">Kode RO</th>
+                        <th class="text-center" style="width:120px">Kode Komponen</th>
                         <th>Nama Komponen</th>
-                        <th style="width:100px">Tahun</th>
-                        <th style="width:140px">Aksi</th>
+                        <th class="text-center" style="width:80px">Tahun</th>
+                        <th class="text-center" style="width:120px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($items as $i => $k)
                     <tr>
-                        <td class="text-center">{{ $i+1 }}</td>
-                        <td>{{ $k->rincianOutput?->klasifikasiRo?->kegiatan?->program?->satker?->nama_satker }}</td>
-                        <td>{{ $k->rincianOutput?->kode_ro }}</td>
-                        <td>{{ $k->kode_komponen }}</td>
-                        <td>{{ $k->nama_komponen }}</td>
-                        <td class="text-center">{{ $k->tahun_anggaran }}</td>
-                        <td class="text-center">
-                            <a href="{{ route('master.komponens.edit', $k) }}"
-                               class="btn btn-sm btn-warning">Edit</a>
+                        <td class="text-center align-middle text-muted small">{{ $i+1 }}</td>
+                        <td class="align-middle">
+                            <div class="text-structure text-uppercase">{{ $k->rincianOutput?->klasifikasiRo?->kegiatan?->program?->satker?->nama_satker }}</div>
+                        </td>
+                        <td class="text-center align-middle font-weight-bold">
+                            <span class="badge badge-light border text-dark px-2 py-1">{{ $k->rincianOutput?->kode_ro }}</span>
+                        </td>
+                        <td class="text-center align-middle font-weight-bold text-dark">
+                            <code>{{ $k->kode_komponen }}</code>
+                        </td>
+                        <td class="align-middle font-weight-bold text-dark">{{ $k->nama_komponen }}</td>
+                        <td class="text-center align-middle">
+                            <span class="badge badge-info px-3 py-2 rounded-pill shadow-xs">
+                                {{ $k->tahun_anggaran }}
+                            </span>
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="btn-group">
+                                <a href="{{ route('master.komponens.edit', $k) }}" 
+                                   class="btn btn-sm btn-outline-primary border-0" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
 
-                            <form action="{{ route('master.komponens.destroy', $k) }}"
-                                  method="POST"
-                                  class="d-inline form-delete">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger">Hapus</button>
-                            </form>
+                                <form action="{{ route('master.komponens.destroy', $k) }}" 
+                                      method="POST" class="d-inline form-delete">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Hapus">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -115,39 +183,52 @@
 </div>
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
 $(function () {
+    // ✅ DataTables
     $('#dtKomponen').DataTable({
         pageLength: 25,
         order: [[3, 'asc']],
-        responsive: true
+        responsive: true,
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+        }
     });
 
+    // ✅ SweetAlert Confirm Delete
     $(document).on('submit', '.form-delete', function (e) {
         e.preventDefault();
         const form = this;
 
         swal({
             title: "Yakin hapus?",
-            text: "Data ini tidak bisa dikembalikan.",
+            text: "Data komponen ini tidak bisa dikembalikan.",
             icon: "warning",
             buttons: {
-                cancel: { text: "Batal", visible: true, className: "btn btn-secondary" },
+                cancel: { text: "Batal", visible: true, className: "btn btn-light border" },
                 confirm: { text: "Ya, hapus", className: "btn btn-danger" }
             },
             dangerMode: true
         }).then(ok => { if (ok) form.submit(); });
     });
 
-    const msgSuccess = @json(session('success'));
-    @if($errors->any())
-        const msgValidation = @json($errors->first());
-    @else
-        const msgValidation = null;
-    @endif
+    // ✅ Notification Logic
+    const toast = (title, text, icon, btnClass) => {
+        swal({
+            title: title,
+            text: text,
+            icon: icon,
+            buttons: { confirm: { text: "OK", className: btnClass } }
+        });
+    };
 
-    if (msgValidation) swal("Validasi gagal", msgValidation, "error");
-    else if (msgSuccess) swal("Berhasil", msgSuccess, "success");
+    @if(session('success')) toast("Berhasil", @json(session('success')), "success", "btn btn-success"); @endif
+    @if(session('error')) toast("Gagal", @json(session('error')), "error", "btn btn-danger"); @endif
+    @if($errors->any()) toast("Gagal", @json($errors->first()), "error", "btn btn-danger"); @endif
 });
 </script>
 @endpush

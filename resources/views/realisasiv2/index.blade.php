@@ -1,15 +1,102 @@
 @extends('layouts.index')
 
-{{-- Tambahkan CSS DataTables di head melalui push atau langsung --}}
+{{-- Tambahkan CSS DataTables & Select2 untuk dropdown yang lebih baik --}}
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
     .filter-box {
-        background: #f8f9fc;
+        background: #ffffff;
         border: 1px solid #e3e6f0;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .nav-pills.nav-secondary .nav-link {
+        background: #f8f9fc;
+        color: #5a5c69;
+        border-radius: 12px;
+        margin-right: 10px;
+        margin-bottom: 12px;
+        padding: 12px 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #eaecf4;
+        display: flex;
+        align-items: center;
+        min-height: 45px;
+    }
+
+    .nav-pills.nav-secondary .nav-link.active {
+        background: #6861ce !important;
+        color: white !important;
+        border-color: #6861ce;
+        box-shadow: 0 8px 15px rgba(104, 97, 206, 0.25);
+        transform: translateY(-2px);
+    }
+
+    /* ANIMASI KEDIP SOFT (MENGGUNAKAN RGBA) */
+    @keyframes blink-soft {
+        0% { background-color: #f44336; color: white; }
+        50% { background-color: rgba(244, 67, 54, 0.15); color: #f44336; }
+        100% { background-color: #f44336; color: white; }
+    }
+
+    .blink-danger {
+        animation: blink-soft 2s infinite ease-in-out !important;
+        border-color: #f44336 !important;
+    }
+
+    .blink-danger .badge-count {
+        background: white !important;
+        color: #f44336 !important;
+    }
+
+    .badge-count {
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        margin-left: 10px;
+        font-weight: 800;
+        min-width: 25px;
+        text-align: center;
+    }
+
+    .count-default { background: #eaecf4; color: #5a5c69; }
+    .count-warning { background: #fff4e5; color: #ff9800; }
+    .count-danger { background: #ffebee; color: #f44336; }
+    .count-success { background: #e8f5e9; color: #4caf50; }
+    .count-info { background: #e3f2fd; color: #2196f3; }
+
+    .nav-link.active .badge-count {
+        background: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+    }
+
+    #realisasiTable { border-collapse: collapse !important; }
+    #realisasiTable thead th {
+        background-color: #f8f9fc;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: #4e73df;
+    }
+
+    #realisasiTable tfoot th {
+        background-color: #f8f9fc;
+        border-top: 2px solid #e3e6f0;
+        color: #3a3b45;
+    }
+
+    .filter-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #9e9e9e;
+        margin-bottom: 5px;
+        display: block;
     }
 </style>
 @endpush
@@ -18,140 +105,256 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                     <div>
-                        <h6 class="m-0 font-weight-bold text-primary">List Realisasi: {{ $selectedCoa->uraian ?? 'Semua Data' }}</h6>
-                        <small class="text-muted">Tahun Anggaran: {{ $selectedCoa->tahun_anggaran ?? '-' }}</small>
+                        <h6 class="m-0 font-weight-bold text-primary">Daftar Realisasi Anggaran</h6>
+                        <span class="text-muted small">{{ $selectedCoa->uraian ?? 'Semua Mata Anggaran' }}</span>
                     </div>
                     <div>
                         @if($coaItemId)
-                        <a href="{{ route('realisasi-v2.create', ['coa_item_id' => $coaItemId]) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Tambah Realisasi
+                        <a href="{{ route('realisasi-v2.create', ['coa_item_id' => $coaItemId]) }}" class="btn btn-primary btn-sm rounded-pill px-3">
+                            <i class="fas fa-plus-circle mr-1"></i> Tambah Realisasi
                         </a>
                         @endif
                     </div>
                 </div>
-                <div class="card-body">
 
-                    {{-- Alert Statistik --}}
+                <div class="card-body">
+                    {{-- Statistik Ringkasan Pagu --}}
                     @if($selectedCoa)
-                    <div class="alert alert-info border-left-info shadow-sm mb-4">
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <small class="d-block text-uppercase fw-bold">Total Pagu:</small>
-                                <h5 class="fw-bold mb-0">Rp {{ number_format($selectedCoa->jumlah, 0, ',', '.') }}</h5>
+                    <div class="row mb-4">
+                        <div class="col-xl-4 col-md-6 mb-2">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Pagu</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($selectedCoa->jumlah, 0, ',', '.') }}</div>
                             </div>
-                            <div class="col-md-4 text-center border-left">
-                                <small class="d-block text-uppercase fw-bold text-danger">Total Realisasi:</small>
-                                <h5 class="fw-bold mb-0 text-danger">Rp {{ number_format($selectedCoa->realisasi_total, 0, ',', '.') }}</h5>
+                        </div>
+                        <div class="col-xl-4 col-md-6 mb-2">
+                            <div class="border rounded p-3 bg-light border-left-danger">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Realisasi (Kumulatif)</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format($selectedCoa->realisasi_total, 0, ',', '.') }}</div>
                             </div>
-                            <div class="col-md-4 text-center border-left">
-                                <small class="d-block text-uppercase fw-bold text-success">Sisa Pagu:</small>
-                                <h5 class="fw-bold mb-0 text-success">Rp {{ number_format(($selectedCoa->jumlah - $selectedCoa->realisasi_total), 0, ',', '.') }}</h5>
+                        </div>
+                        <div class="col-xl-4 col-md-6 mb-2">
+                            <div class="border rounded p-3 bg-light border-left-success">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Sisa Anggaran</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ number_format(($selectedCoa->jumlah - $selectedCoa->realisasi_total), 0, ',', '.') }}</div>
                             </div>
                         </div>
                     </div>
                     @endif
 
-                    {{-- Form Filter --}}
-                    <div class="filter-box">
-                        <form action="{{ route('realisasi-v2.index') }}" method="GET" class="row g-2 align-items-end">
-                            <input type="hidden" name="coa_item_id" value="{{ $coaItemId }}">
-
-                            <div class="col-md-4">
-                                <label class="small fw-bold">Pencarian Global</label>
-                                <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari PLO / Kegiatan / Penyedia..." value="{{ $search }}">
+                    {{-- Filter Navigation --}}
+                    <div class="filter-box shadow-sm">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary-soft p-2 rounded mr-2">
+                                <i class="fas fa-layer-group text-primary"></i>
                             </div>
+                            <label class="small fw-bold text-uppercase text-muted m-0">Filter Berdasarkan Progres Berkas</label>
+                        </div>
 
-                            <div class="col-md-3">
-                                <label class="small fw-bold">Status Berkas</label>
-                                <select name="status_berkas" class="form-select form-select-sm">
-                                    <option value="">-- Semua Status --</option>
-                                    <option value="Proses" {{ request('status_berkas') == 'Proses' ? 'selected' : '' }}>Proses</option>
-                                    <option value="Selesai" {{ request('status_berkas') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                                    <option value="Ditolak/Revisi" {{ request('status_berkas') == 'Ditolak/Revisi' ? 'selected' : '' }}>Ditolak/Revisi</option>
-                                </select>
-                            </div>
+                        @php
+                        $currentStatus = request('status_berkas');
+                        $statusConfig = [
+                            'Draft' => ['color' => 'count-default'],
+                            'Menunggu Finalisasi Bendahara' => ['color' => 'count-warning'],
+                            'Ditolak/Revisi' => ['color' => 'count-danger'],
+                            'Proses Verifikasi' => ['color' => 'count-info'],
+                            'Terverifikasi' => ['color' => 'count-info'],
+                            'Proses PPK' => ['color' => 'count-info'],
+                            'Proses PPSPM' => ['color' => 'count-info'],
+                            'Selesai' => ['color' => 'count-success'],
+                        ];
+                        $totalCountAll = isset($counts) ? array_sum($counts) : 0;
+                        @endphp
 
-                            <div class="col-md-3">
-                                <button class="btn btn-primary btn-sm px-3" type="submit">
-                                    <i class="fas fa-filter fa-sm"></i> Terapkan Filter
-                                </button>
-                                <a href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId]) }}" class="btn btn-light btn-sm border">
-                                    Reset
+                        <ul class="nav nav-pills nav-secondary mb-4" id="pills-tab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link {{ empty($currentStatus) ? 'active' : '' }}"
+                                    href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId, 'search' => request('search')]) }}">
+                                    Semua Berkas <span class="badge-count count-default">{{ $totalCountAll }}</span>
                                 </a>
-                            </div>
-                        </form>
+                            </li>
+                            @foreach($statusConfig as $statusName => $cfg)
+                            @php
+                                // Logika Kedip Soft: Hanya jika status Ditolak dan jumlah > 0
+                                $shouldBlink = ($statusName === 'Ditolak/Revisi' && isset($counts[$statusName]) && $counts[$statusName] > 0);
+                            @endphp
+                            <li class="nav-item">
+                                <a class="nav-link {{ $currentStatus == $statusName ? 'active' : '' }} {{ $shouldBlink ? 'blink-danger' : '' }}"
+                                    href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId, 'status_berkas' => $statusName, 'search' => request('search')]) }}">
+                                    {{ $statusName }}
+                                    <span class="badge-count {{ $cfg['color'] }}">{{ $counts[$statusName] ?? 0 }}</span>
+                                </a>
+                            </li>
+                            @endforeach
+                        </ul>
+
+                        {{-- FILTER BERJENJANG --}}
+                        <div class="pt-4 border-top">
+                            <form action="{{ route('realisasi-v2.index') }}" method="GET">
+                                <input type="hidden" name="coa_item_id" value="{{ $coaItemId }}">
+                                <input type="hidden" name="status_berkas" value="{{ $currentStatus }}">
+
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Tanggal Mulai</label>
+                                        <input type="date" name="tgl_awal" class="form-control form-control-sm" value="{{ request('tgl_awal') }}" onchange="this.form.submit()">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Tanggal Selesai</label>
+                                        <input type="date" name="tgl_akhir" class="form-control form-control-sm" value="{{ request('tgl_akhir') }}" onchange="this.form.submit()">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Filter GUP</label>
+                                        <select name="filter_gup" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
+                                            <option value="">-- Semua GUP --</option>
+                                            @foreach($listGup as $gup)
+                                            <option value="{{ $gup }}" {{ request('filter_gup') == $gup ? 'selected' : '' }}>{{ $gup }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Filter RO</label>
+                                        <select name="filter_ro" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
+                                            <option value="">-- Semua RO --</option>
+                                            @foreach($listRo as $kode_ro)
+                                            <option value="{{ $kode_ro }}" {{ request('filter_ro') == $kode_ro ? 'selected' : '' }}>{{ $kode_ro }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Filter Akun</label>
+                                        <select name="filter_akun" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
+                                            <option value="">-- Semua Akun --</option>
+                                            @foreach($listAkun as $row)
+                                            <option value="{{ $row->kode_akun }}" {{ request('filter_akun') == $row->kode_akun ? 'selected' : '' }}>{{ $row->kode_akun }} - {{ $row->nama_akun }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="filter-label">Pencarian Cepat</label>
+                                        <div class="input-group">
+                                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Kode PLO, Penerima, atau Uraian..." value="{{ request('search') }}">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary btn-sm px-3" type="submit"><i class="fas fa-search"></i> Cari</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label">Aksi</label>
+                                        <div class="btn-group w-100">
+                                            <button type="submit" formaction="{{ route('realisasi-v2.export-excel') }}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-file-excel mr-1"></i> Export
+                                            </button>
+                                            <a href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId]) }}" class="btn btn-light btn-sm border">
+                                                <i class="fas fa-sync-alt"></i> Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
 
+                    {{-- Data Table --}}
                     <div class="table-responsive">
-                        <table id="realisasiTable" class="table table-bordered table-hover small w-100">
-                            <thead class="bg-light text-center">
+                        <table id="realisasiTable" class="table table-hover small w-100">
+                            <thead class="text-center">
                                 <tr>
-                                    <th width="180px">Struktur Anggaran</th>
-                                    <th width="80px">Kode PLO</th>
-                                    <th width="50px">No Urut</th>
+                                    <th>Struktur Anggaran</th>
+                                    <th>Kode PLO</th>
+                                    <th>No Urut</th>
                                     <th>Tgl Kuitansi</th>
                                     <th>Penerima</th>
                                     <th>Uraian</th>
                                     <th>Bruto</th>
-                                    <th>PPh</th>
-                                    <th>Bersih</th>
                                     <th>Status</th>
-                                    <th width="70px">Aksi</th>
+                                    <th>GUP</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($items as $item)
                                 @php
                                 $coa = $item->coaItem;
-                                $subKomp = $coa?->subKomponen;
-                                $komp = $subKomp?->komponen;
-                                $ro = $komp?->rincianOutput;
-                                $kro = $ro?->klasifikasiRo;
-                                $kgt = $kro?->kegiatan;
                                 $mak = $coa?->mak;
+                                $kodeAkun = $mak?->akun?->kode_akun ?? '-';
+                                $kodeRo = $coa?->subKomponen?->komponen?->rincianOutput?->kode_ro ?? '-';
+
+                                $badgeColor = match($item->status_berkas) {
+                                    'Selesai' => 'success',
+                                    'Ditolak/Revisi' => 'danger',
+                                    'Terverifikasi' => 'info',
+                                    'Proses Verifikasi' => 'info',
+                                    'Proses PPK' => 'info',
+                                    'Proses PPSPM' => 'info',
+                                    default => 'warning'
+                                };
                                 @endphp
-                                <tr @if($item->status_berkas == 'Ditolak/Revisi') class="table-warning" @endif>
-                                    <td>
-                                        <div class="small lh-sm">
-                                            <strong>Kgt:</strong> {{ $kgt?->kode_kegiatan ?? '-' }}<br>
-                                            <strong>KRO:</strong> {{ $kro?->kode_klasifikasi_ro ?? '-' }}<br>
-                                            <strong>MAK:</strong> {{ $mak?->nama_mak ?? '-' }}
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="small">
+                                            <div class="mb-1">
+                                                <span class="text-primary font-weight-bold" style="width: 45px; display: inline-block;">MAK:</span>
+                                                <span class="text-dark">{{ $mak?->nama_mak ?? '-' }}</span>
+                                            </div>
+                                            <div class="mb-1">
+                                                <span class="text-info font-weight-bold" style="width: 45px; display: inline-block;">RO:</span>
+                                                <span class="badge badge-info-soft text-info border-info border">{{ $kodeRo }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-success font-weight-bold" style="width: 45px; display: inline-block;">AKUN:</span>
+                                                <span class="badge badge-light border text-dark">{{ $kodeAkun }}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="text-center fw-bold text-primary">{{ $item->kode_unik_plo }}</td>
-                                    <td class="text-center">{{ str_pad($item->no_urut, 4, '0', STR_PAD_LEFT) }}</td>
-                                    <td class="text-center">{{ $item->tgl_kuitansi->format('d/m/Y') }}</td>
-                                    <td>{{ $item->penerima_penyedia }}</td>
-                                    <td>{{ Str::limit($item->uraian, 40) }}</td>
-                                    <td class="text-end fw-bold">{{ number_format($item->jumlah, 0, ',', '.') }}</td>
-                                    <td class="text-end text-danger">{{ number_format((float)$item->pph_total, 0, ',', '.') }}</td>
-                                    <td class="text-end fw-bold text-success">{{ number_format((float)$item->total_bersih, 0, ',', '.') }}</td>
-                                    <td class="text-center">
-                                        @php
-                                        $badgeColor = match($item->status_berkas) {
-                                        'Selesai' => 'success',
-                                        'Ditolak/Revisi' => 'danger',
-                                        default => 'warning'
-                                        };
-                                        @endphp
-                                        <span class="badge bg-{{ $badgeColor }} shadow-sm">{{ $item->status_berkas }}</span>
+                                    <td class="text-center align-middle font-weight-bold text-dark">{{ $item->kode_unik_plo }}</td>
+                                    <td class="text-center align-middle">{{ str_pad($item->no_urut, 4, '0', STR_PAD_LEFT) }}</td>
+                                    <td class="text-center align-middle">{{ $item->tgl_kuitansi->format('d/m/Y') }}</td>
+                                    <td class="align-middle">{{ $item->penerima_penyedia }}</td>
+                                    <td class="align-middle text-muted">{{ Str::limit($item->uraian, 35) }}</td>
+                                    <td class="text-end align-middle font-weight-bold">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge badge-{{ $badgeColor }} px-3 py-2 rounded-pill shadow-xs">
+                                            {{ $item->status_berkas }}
+                                        </span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
+                                        @if($item->gup)
+                                        <span class="badge badge-secondary px-2 py-1">{{ $item->gup }}</span>
+                                        @else
+                                        <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center align-middle">
                                         <div class="btn-group">
-                                            <a href="{{ route('realisasi-v2.edit', $item->id) }}" class="btn btn-white btn-sm border shadow-sm" title="Edit">
-                                                <i class="fas fa-edit text-primary"></i>
+                                            <a href="{{ route('realisasi-v2.edit', $item->id) }}" class="btn btn-sm btn-outline-primary border-0" title="Edit">
+                                                <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{{ route('realisasi-v2.show', $item->id) }}" class="btn btn-white btn-sm border shadow-sm" title="Detail">
-                                                <i class="fas fa-eye text-info"></i>
-                                            </a>
+                                            <a href="{{ route('realisasi-v2.show', $item->id) }}" class="btn btn-sm btn-outline-info border-0" title="Detail"><i class="fas fa-eye"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="6" class="text-end align-middle py-3">
+                                        <span class="text-uppercase font-weight-bold">Total Realisasi :</span>
+                                    </th>
+                                    <th class="text-end align-middle py-3">
+                                        <span class="h6 mb-0 font-weight-bold text-primary">
+                                            Rp {{ number_format($totalRealisasiFiltered ?? 0, 0, ',', '.') }}
+                                        </span>
+                                    </th>
+                                    <th colspan="3" class="bg-light"></th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -162,26 +365,24 @@
 @endsection
 
 @push('scripts')
-{{-- Script DataTables Online --}}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
     $(document).ready(function() {
+        $('.select2-filter').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+
         $('#realisasiTable').DataTable({
             "pageLength": 10,
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
             },
-            "columnDefs": [{
-                    "orderable": false,
-                    "targets": [0, 10]
-                } // Nonaktifkan sortir di kolom struktur & aksi
-            ],
-            "order": [
-                [2, 'desc']
-            ] // Default sortir No Urut terbaru
+            "order": [[2, 'desc']]
         });
     });
 </script>
