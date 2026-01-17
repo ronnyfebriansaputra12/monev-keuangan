@@ -21,7 +21,10 @@ class CoaItemController extends Controller
 
         $q = CoaItem::with([
             'mak.akun',
-            'subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'
+            'subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker',
+            'realisasiHeaders' => function ($query) {
+                $query->where('status_berkas', 'selesai');
+            }
         ])
             ->when($subKomponenId, fn($qq) => $qq->where('sub_komponen_id', (int)$subKomponenId))
             ->when($makId, fn($qq) => $qq->where('mak_id', (int)$makId))
@@ -34,11 +37,25 @@ class CoaItemController extends Controller
             ->orderBy('urutan')
             ->get();
 
-        // Perhitungan Total hanya untuk item level 0 (agar tidak double count dengan child)
-        // Atau jika struktur database Anda flat, hapus filter level 0.
-        $totalPagu = $coaItems->where('parent_id', null)->sum('jumlah');
-        $totalRealisasi = $coaItems->where('parent_id', null)->sum('realisasi_total');
+        // 1. Total Pagu
+        $totalPagu = $coaItems->whereIn('level', [0, 2])->sum('jumlah');
+
+        // 2. Total Realisasi (Selesai/SP2D)
+        $totalRealisasi = $coaItems->whereIn('level', [0, 2])->sum(function ($item) {
+            return $item->realisasiHeaders->sum('jumlah');
+        });
+
+        // 3. Total Realisasi Sebelum SP2D (Sedang Proses)
+        $coaItemIds = $coaItems->whereIn('level', [0, 2])->pluck('id');
+        $totalSebelumSP2D = \App\Models\Realisasi::whereIn('coa_item_id', $coaItemIds)
+            ->where('status_berkas', '!=', 'selesai')
+            ->sum('jumlah');
+
+        // 4. Sisa Anggaran (Administratif)
         $totalSisa = $totalPagu - $totalRealisasi;
+
+        // 5. Sisa Anggaran Sebelum SP2D (Sisa Riil/Nett)
+        $totalSisaSebelumSP2D = $totalSisa - $totalSebelumSP2D;
 
         $maks = Mak::with('akun')->orderBy('akun_id')->get();
 
@@ -50,7 +67,9 @@ class CoaItemController extends Controller
             'search',
             'totalPagu',
             'totalRealisasi',
-            'totalSisa'
+            'totalSebelumSP2D',
+            'totalSisa',
+            'totalSisaSebelumSP2D' // Variabel baru
         ));
     }
     public function create()

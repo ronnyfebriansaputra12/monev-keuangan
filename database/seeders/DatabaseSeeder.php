@@ -84,6 +84,11 @@ class DatabaseSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'role'  => 'Superadmin',
             ],
+                        [
+                'name'  => 'PPBJ',
+                'email' => 'ppbj@example.com',
+                'role'  => 'PPBJ',
+            ],
         ];
 
         foreach ($otherUsers as $user) {

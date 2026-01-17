@@ -44,6 +44,7 @@ class RealisasiControllerV2 extends Controller
         $filterGup = $request->input('filter_gup');
         $filterRo = $request->input('filter_ro');
         $filterAkun = $request->input('filter_akun');
+        $jenisRealisasi = $request->input('jenis_realisasi'); // Tambahan Baru
 
         // Filter Tanggal
         $tgl_awal = $request->input('tgl_awal');
@@ -56,18 +57,21 @@ class RealisasiControllerV2 extends Controller
             'coaItem.subKomponen.komponen.rincianOutput'
         ]);
 
-        // MODIFIKASI: Cek Role User
-        // Jika role adalah 'PLO', batasi data hanya miliknya sendiri
-        // Jika role lain (Superadmin, Bendahara, dll), biarkan tanpa filter created_by
+        // MODIFIKASI: Filter berdasarkan Role
         if (auth()->user()->role === 'PLO') {
+            // PLO melihat semua data miliknya (LS & GUP)
             $q->where('created_by', auth()->id());
+        } elseif (auth()->user()->role === 'PPBJ') {
+            // PPBJ hanya melihat data miliknya DAN harus jenis LS
+            $q->where('created_by', auth()->id())
+                ->where('jenis_realisasi', 'LS');
         }
 
         if ($coaItemId) {
             $q->where('coa_item_id', $coaItemId);
         }
 
-        // --- LOGIC COUNT STATUS (Otomatis mengikuti filter Role di atas) ---
+        // --- LOGIC COUNT STATUS ---
         $countQuery = clone $q;
         $counts = $countQuery->select('status_berkas', \DB::raw('count(*) as total'))
             ->groupBy('status_berkas')
@@ -79,11 +83,23 @@ class RealisasiControllerV2 extends Controller
             $q->where('status_berkas', $statusBerkas);
         }
 
+        // Filter Jenis Realisasi (UI dropdown)
+        if ($jenisRealisasi) {
+            // Jika Superadmin/PPSPM/Bendahara, mereka bebas filter apa saja
+            if (in_array(auth()->user()->role, ['PPSPM', 'Bendahara', 'Superadmin'])) {
+                $q->where('jenis_realisasi', $jenisRealisasi);
+            }
+            // Jika PLO, mereka boleh filter LS/GUP sesuai input dropdown
+            elseif (auth()->user()->role === 'PLO') {
+                $q->where('jenis_realisasi', $jenisRealisasi);
+            }
+            // Jika PPBJ, abaikan input dropdown dan tetap kunci ke LS (sudah ditangani di query utama di atas)
+        }
+
         if ($filterGup) {
             $q->where('gup', $filterGup);
         }
 
-        // Filter Tanggal Kuitansi
         if ($tgl_awal && $tgl_akhir) {
             $q->whereBetween('tgl_kuitansi', [$tgl_awal, $tgl_akhir]);
         }
@@ -109,12 +125,10 @@ class RealisasiControllerV2 extends Controller
         }
 
         $totalRealisasiFiltered = $q->sum('jumlah');
-
         $items = $q->orderBy('no_urut', 'desc')->get();
         $selectedCoa = $coaItemId ? \App\Models\CoaItem::find($coaItemId) : null;
 
         // -- DATA DROPDOWN --
-        // Filter dropdown GUP juga disesuaikan dengan role
         $listGupQuery = Realisasi::whereNotNull('gup')->where('gup', '!=', '');
         if (auth()->user()->role === 'PLO') {
             $listGupQuery->where('created_by', auth()->id());
@@ -123,6 +137,9 @@ class RealisasiControllerV2 extends Controller
 
         $listRo = \DB::table('rincian_outputs')->whereNotNull('kode_ro')->distinct()->pluck('kode_ro');
         $listAkun = \DB::table('master_akuns')->select('kode_akun', 'nama_akun')->get();
+
+        // List Jenis Realisasi untuk Dropdown
+        $listJenisRealisasi = ['LS', 'GUP'];
 
         return view('realisasiv2.index', compact(
             'items',
@@ -136,7 +153,8 @@ class RealisasiControllerV2 extends Controller
             'listAkun',
             'tgl_awal',
             'tgl_akhir',
-            'totalRealisasiFiltered'
+            'totalRealisasiFiltered',
+            'listJenisRealisasi' // Tambahan Baru
         ));
     }
 
@@ -146,14 +164,16 @@ class RealisasiControllerV2 extends Controller
         $selectedCoa = null;
 
         if ($coaItemId) {
-            // Memuat silsilah anggaran lengkap untuk ditampilkan di side panel
-            $selectedCoa = CoaItem::with(['subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'])
-                ->findOrFail($coaItemId);
+            // Memuat silsilah anggaran + relasi MAK dan AKUN
+            $selectedCoa = CoaItem::with([
+                'mak.akun', // Relasi ke MAK lalu ke MasterAkun
+                'subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'
+            ])->findOrFail($coaItemId);
         }
 
         $satkers = Satker::orderBy('nama_satker')->get();
         $coaItems = CoaItem::orderBy('kode_coa_item')->get();
-        $maks = Mak::all();
+        $maks = Mak::with('akun')->get(); // Muat akun untuk dropdown mak juga
 
         return view('realisasiv2.create', compact('satkers', 'coaItems', 'maks', 'selectedCoa'));
     }
@@ -184,26 +204,27 @@ class RealisasiControllerV2 extends Controller
             'tanggal_penyerahan_berkas' => 'nullable|date',
             'status_berkas'             => 'nullable|string',
             'dokumen.*'                 => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+            // Validasi tambahan untuk berkas kustom
+            'custom_dokumen.*'          => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+            'custom_nama_berkas.*'      => 'nullable|string',
         ]);
 
-        // 2. Logika Nomor Urut Otomatis (RESET per kategori, format angka biasa)
+        // 2. Logika Nomor Urut Otomatis
         $sumber = $request->sumber_anggaran;
         $bidang = $request->bidang;
-
-        // Tentukan inisial tengah (Middle Part)
         $middlePart = ($sumber === 'GUP') ? $bidang : (($sumber === 'BGN') ? 'MG' : $sumber);
 
-        // Cari record terakhir yang memiliki middle part yang sama
         $lastRecord = Realisasi::where('sumber_anggaran', $sumber)
             ->where('kode_unik_plo', 'like', "%.$middlePart.%")
             ->orderBy('no_urut', 'desc')
             ->first();
 
-        // Mulai dari 1
         $nextNoUrut = $lastRecord ? ($lastRecord->no_urut + 1) : 1;
 
-        // 3. Logika Upload Berkas
+        // 3. Logika Upload Berkas (Gabungan Statis & Kustom)
         $filePaths = [];
+
+        // A. Handle Berkas dari List (Statis)
         if ($request->has('dokumen')) {
             foreach ($request->file('dokumen') as $nama_dokumen => $file) {
                 if ($file) {
@@ -217,11 +238,27 @@ class RealisasiControllerV2 extends Controller
             }
         }
 
-        // 4. Penggabungan Data Akhir
-        $data = $request->except('dokumen');
-        $data['no_urut'] = $nextNoUrut; // Tersimpan sebagai integer (1, 2, dst)
+        // B. Handle Berkas Tambahan (Kustom)
+        if ($request->hasFile('custom_dokumen')) {
+            $customFiles = $request->file('custom_dokumen');
+            $customNames = $request->input('custom_nama_berkas');
 
-        // Generate kode_unik_plo tanpa padding nol (Contoh: K.TU.1)
+            foreach ($customFiles as $key => $file) {
+                if ($file && isset($customNames[$key])) {
+                    $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                    $filePaths[] = [
+                        'nama_berkas' => $customNames[$key], // Nama diambil dari input text
+                        'path'        => $path,
+                        'uploaded_at' => now()->toDateTimeString()
+                    ];
+                }
+            }
+        }
+
+        // 4. Penggabungan Data Akhir
+        $data = $request->except(['dokumen', 'custom_dokumen', 'custom_nama_berkas']);
+        $data['no_urut'] = $nextNoUrut;
+
         $userInitial = Auth::user()->plo_code ?? 'U';
         $data['kode_unik_plo'] = $userInitial . '.' . $middlePart . '.' . $nextNoUrut;
 
@@ -248,7 +285,7 @@ class RealisasiControllerV2 extends Controller
             $realisasi->id
         );
 
-        return redirect()->route('realisasi-v2.index', ['coa_item_id' => $realisasi->coa_item_id])
+        return redirect()->route('realisasi-v2.index')
             ->with('success', "Data berhasil disimpan dengan Kode: " . $realisasi->kode_unik_plo);
     }
 
@@ -301,8 +338,8 @@ class RealisasiControllerV2 extends Controller
             'coaItem.subKomponen.komponen.rincianOutput.klasifikasiRo.kegiatan.program.satker'
         ])->findOrFail($id);
 
-        // Proteksi Role: PLO dan Bendahara diizinkan
-        $allowedRoles = ['PLO', 'Bendahara'];
+        // Proteksi Role: PLO, Bendahara, dan PPBJ diizinkan
+        $allowedRoles = ['PLO', 'Bendahara', 'PPBJ'];
         if (!in_array(Auth::user()->role, $allowedRoles)) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses.');
         }
@@ -328,69 +365,96 @@ class RealisasiControllerV2 extends Controller
         $statusAwal = $realisasi->status_berkas;
 
         // 1. Validasi
-        $rules = ['status_berkas' => 'required'];
+        $rules = [
+            'status_berkas'        => 'required',
+            // Validasi untuk berkas kustom baru
+            'custom_dokumen.*'     => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+            'custom_nama_berkas.*' => 'nullable|string',
+        ];
+
         if (Auth::user()->role == 'Bendahara') {
             $rules['gup'] = 'required';
-            $rules['no_urut_arsip_spby'] = 'required';
         } else {
             $rules += [
-                'nama_kegiatan' => 'required',
+                'nama_kegiatan'     => 'required',
                 'penerima_penyedia' => 'required',
-                'jumlah' => 'required|numeric',
-                'dokumen.*' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+                'jumlah'            => 'required|numeric',
+                'dokumen.*'         => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
             ];
         }
         $request->validate($rules);
 
         // 2. Olah Data
         if (Auth::user()->role == 'Bendahara') {
-            // PERBAIKAN: Tambahkan status_digitalisasi agar diizinkan masuk ke $data
-            $data = $request->only(['gup', 'no_urut_arsip_spby', 'status_berkas', 'status_digitalisasi']);
-
-            // Pastikan nilai boolean (1 atau 0) tersimpan
+            $data = $request->only(['gup', 'no_urut_arsip_spby', 'status_berkas', 'status_digitalisasi', 'status_sp2d']);
             $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
+            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
 
             $aktivitasLog = 'Update Kelengkapan & Digitalisasi Bendahara';
         } else {
-            $data = $request->except('dokumen');
+            // Jangan masukkan input berkas mentah ke array $data
+            $data = $request->except(['dokumen', 'custom_dokumen', 'custom_nama_berkas']);
             $aktivitasLog = 'Update Data Realisasi';
 
-            // Ambil lampiran lama
-            $currentFiles = is_array($realisasi->lampiran) ? $realisasi->lampiran : json_decode($realisasi->lampiran, true) ?? [];
+            // Ambil lampiran lama (decode JSON ke Array)
+            $currentFiles = is_array($realisasi->lampiran)
+                ? $realisasi->lampiran
+                : json_decode($realisasi->lampiran, true) ?? [];
 
-            // Update Berkas Baru secara spesifik
-            if ($request->has('dokumen')) {
-                foreach ($request->file('dokumen') as $nama_dokumen => $file) {
+            // A. UPDATE BERKAS DARI LIST ATAU BERKAS KUSTOM LAMA
+            // (Input 'dokumen' menangani semua file yang sudah punya label nama)
+            if ($request->hasFile('dokumen')) {
+                foreach ($request->file('dokumen') as $nama_berkas => $file) {
                     if ($file) {
                         $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
 
-                        // Cari index jika sudah ada nama berkas yang sama
+                        // Cari apakah berkas dengan nama ini sudah ada di array lampiran
                         $foundKey = -1;
                         foreach ($currentFiles as $key => $existing) {
-                            if ($existing['nama_berkas'] === $nama_dokumen) {
+                            if ($existing['nama_berkas'] === $nama_berkas) {
                                 $foundKey = $key;
                                 break;
                             }
                         }
 
-                        $newEntry = [
-                            'nama_berkas' => $nama_dokumen,
+                        $entryData = [
+                            'nama_berkas' => $nama_berkas,
                             'path'        => $path,
                             'uploaded_at' => now()->toDateTimeString()
                         ];
 
                         if ($foundKey !== -1) {
-                            $currentFiles[$foundKey] = $newEntry; // Timpa
+                            $currentFiles[$foundKey] = $entryData; // Timpa file lama
                         } else {
-                            $currentFiles[] = $newEntry; // Tambah Baru
+                            $currentFiles[] = $entryData; // Tambah jika belum ada
                         }
                     }
                 }
             }
 
-            $data['lampiran'] = $currentFiles;
-            $data['total'] = $request->jumlah;
+            // B. TAMBAH BERKAS KUSTOM BARU
+            // (Input 'custom_dokumen' menangani baris baru yang ditambahkan user)
+            if ($request->hasFile('custom_dokumen')) {
+                $customFiles = $request->file('custom_dokumen');
+                $customNames = $request->input('custom_nama_berkas');
+
+                foreach ($customFiles as $key => $file) {
+                    if ($file && isset($customNames[$key])) {
+                        $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                        $currentFiles[] = [
+                            'nama_berkas' => $customNames[$key], // Nama sesuai ketikan user
+                            'path'        => $path,
+                            'uploaded_at' => now()->toDateTimeString()
+                        ];
+                    }
+                }
+            }
+
+            // Simpan kembali sebagai JSON
+            $data['lampiran'] = json_encode($currentFiles);
+            $data['total']    = $request->jumlah;
             $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
+            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
 
             // Bersihkan catatan revisi jika status dikirim kembali ke verifikator
             if ($request->status_berkas == 'Proses Verifikasi' && \Str::contains($realisasi->uraian, '[CATATAN')) {
@@ -401,8 +465,14 @@ class RealisasiControllerV2 extends Controller
         $data['updated_by'] = Auth::id();
         $realisasi->update($data);
 
-        // Logging
-        $this->logActivity($aktivitasLog, "User memperbarui data ID #{$id}", $statusAwal, $realisasi->status_berkas, $realisasi->id);
+        // Logging aktivitas
+        $this->logActivity(
+            $aktivitasLog,
+            "User memperbarui data ID #{$id}",
+            $statusAwal,
+            $realisasi->status_berkas,
+            $realisasi->id
+        );
 
         return redirect()->route('realisasi-v2.index', ['coa_item_id' => $realisasi->coa_item_id])
             ->with('success', 'Data berhasil diperbarui.');
@@ -549,49 +619,90 @@ class RealisasiControllerV2 extends Controller
             ->with('success', 'Verifikasi PPK Berhasil, berkas diteruskan ke PPSPM.');
     }
 
-    public function verifyPpspm($id)
+    public function verifyPPSPM(Request $request, $id)
     {
         $realisasi = Realisasi::findOrFail($id);
-        $statusAwal = $realisasi->status_berkas;
 
-        if (Auth::user()->role !== 'PPSPM') {
-            return redirect()->back()->with('error', 'Anda tidak memiliki hak akses untuk verifikasi PPSPM.');
+        // 1. Logika Jika Tombol Reject Ditekan
+        if ($request->action == 'reject') {
+            if ($realisasi->jenis_realisasi != 'LS') {
+                return redirect()->route('realisasi-v2.index')->with('error', 'Hanya jenis LS yang dapat dikembalikan ke PPBJ.');
+            }
+
+            $request->validate([
+                'keterangan' => 'required|string|min:5'
+            ], [
+                'keterangan.required' => 'Alasan revisi wajib diisi!',
+                'keterangan.min' => 'Alasan revisi minimal 5 karakter.'
+            ]);
+
+            $realisasi->update([
+                'status_berkas' => 'Ditolak/Revisi',
+                'catatan_ppspm' => $request->keterangan,
+            ]);
+
+            return redirect()->route('realisasi-v2.index')->with('success', 'Berkas telah ditolak dan dikembalikan ke PPBJ.');
         }
 
-        $realisasi->update([
-            'status_berkas' => 'Menunggu Finalisasi Bendahara',
-            'updated_by' => Auth::id()
-        ]);
+        // 2. Logika Jika Approve (Setuju)
+        if ($realisasi->jenis_realisasi == 'GUP') {
+            // Jika GUP: Status ke Bendahara
+            $realisasi->update([
+                'status_berkas' => 'Menunggu Finalisasi Bendahara',
+                'tgl_verifikasi_ppspm' => now(),
+            ]);
 
-        // LOGGING: Verifikasi PPSPM
-        $this->logActivity('Verifikasi PPSPM', "Pejabat PPSPM menyetujui berkas ID #{$id}. Berkas kembali ke Bendahara untuk tahap akhir", $statusAwal, 'Menunggu Finalisasi Bendahara');
+            $message = 'Berkas GUP berhasil disetujui dan diteruskan ke Bendahara.';
+        } elseif ($realisasi->jenis_realisasi == 'LS') {
+            // Jika LS: Langsung Selesai dan Potong Pagu
+            $realisasi->update([
+                'status_berkas' => 'Selesai',
+                'tgl_verifikasi_ppspm' => now(),
+            ]);
 
-        return redirect()->route('realisasi-v2.index', ['status_berkas' => 'Proses PPSPM'])
-            ->with('success', 'Verifikasi PPSPM Berhasil, berkas siap difinalisasi oleh Bendahara.');
+            // Logika Potong Pagu (Asumsi relasi ke model Pagu ada)
+            // Sesuaikan nama field 'nilai_realisasi' dengan database Anda
+            $pagu = $realisasi->pagu;
+            if ($pagu) {
+                $pagu->decrement('sisa_pagu', $realisasi->nilai_realisasi);
+            }
+
+            $message = 'Berkas LS berhasil disetujui, status selesai, dan pagu telah terpotong.';
+        }
+
+        return redirect()->route('realisasi-v2.index')->with('success', $message);
     }
 
     public function finalize($id)
     {
-        $realisasi = Realisasi::with('coaItem')->findOrFail($id);
-        $statusAwal = $realisasi->status_berkas;
+        try {
+            \DB::transaction(function () use ($id) {
+                $realisasi = Realisasi::with('coaItem')->findOrFail($id);
+                $statusAwal = $realisasi->status_berkas;
 
-        $coaItem = $realisasi->coaItem;
-        if ($coaItem) {
-            $coaItem->realisasi_total += $realisasi->jumlah;
-            $coaItem->sisa_realisasi = $coaItem->pagu_item - $coaItem->realisasi_total;
-            $coaItem->save();
+                $coaItem = $realisasi->coaItem;
+                if ($coaItem) {
+                    $coaItem->realisasi_total += $realisasi->jumlah;
+                    $coaItem->sisa_realisasi = $coaItem->pagu_item - $coaItem->realisasi_total;
+                    $coaItem->save();
+                }
+
+                $realisasi->update([
+                    'status_berkas' => 'Selesai',
+                    'finalized_at' => now(),
+                    'updated_by' => Auth::id()
+                ]);
+
+                $this->logActivity('Finalisasi Realisasi', "Bendahara menutup transaksi ID #{$id}", $statusAwal, 'Selesai');
+            });
+
+            return redirect()->route('realisasi-v2.index')
+                ->with('success', 'Pagu Berhasil Terpotong.');
+        } catch (\Exception $e) {
+            // Ini akan memicu alert "Gagal" di JavaScript Anda
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        $realisasi->update([
-            'status_berkas' => 'Selesai',
-            'finalized_at' => now(),
-            'updated_by' => Auth::id()
-        ]);
-
-        // LOGGING: Finalisasi Akhir
-        $this->logActivity('Finalisasi Realisasi', "Bendahara menutup transaksi ID #{$id}. Pagu COA terpotong senilai Rp " . number_format($realisasi->jumlah, 0, ',', '.'), $statusAwal, 'Selesai');
-
-        return redirect()->route('realisasi-v2.index')->with('success', 'Pagu Berhasil Terpotong.');
     }
     public function exportExcel(Request $request)
     {

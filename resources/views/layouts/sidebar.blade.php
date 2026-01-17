@@ -85,13 +85,15 @@
 
         {{-- ... (Menu Transaksi, Verifikator, dll tetap sama) ... --}}
 
-        {{-- MENU TRANSAKSI PLO --}}
-        @if(in_array(Auth::user()->role, ['PLO', 'Superadmin']))
-        @php $isPloActive = Request::is('realisasi-v2*') && !Request::has('status_berkas'); @endphp
+        {{-- MENU TRANSAKSI PLO / PPBJ --}}
+        @if(in_array(Auth::user()->role, ['PLO', 'PPBJ', 'Superadmin']))
+        @php
+        $isPloActive = Request::is('realisasi-v2*') && !Request::has('status_berkas');
+        @endphp
         <li class="nav-item {{ $isPloActive ? 'active' : '' }}">
           <a data-bs-toggle="collapse" href="#ploMenu">
             <i class="fas fa-pen-square"></i>
-            <p>Transaksi PLO</p>
+            <p>Transaksi {{ Auth::user()->role == 'PPBJ' ? 'PPBJ' : 'PLO' }}</p>
             <span class="caret"></span>
           </a>
           <div class="collapse {{ $isPloActive ? 'show' : '' }}" id="ploMenu">

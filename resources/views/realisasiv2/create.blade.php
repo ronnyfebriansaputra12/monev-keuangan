@@ -6,7 +6,9 @@
         <div class="col-md-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Tambah Realisasi Baru (Role: PLO)</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Tambah Realisasi Baru (Role: {{ Auth::user()->role }})
+                    </h6>
                     <a href="{{ route('realisasi-v2.index', ['coa_item_id' => $selectedCoa->id]) }}" class="btn btn-sm btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
                     </a>
@@ -34,37 +36,17 @@
                         $satker = $prog?->satker;
 
                         $list_berkas = [
-                        "Nominatif",
-                        "Surat Tugas",
-                        "Surat Bukti / Pengeluaran Asli",
-                        "DPR (Daftar Pengeluaran Riil)",
-                        "SPPD",
-                        "Undangan / Surat Undangan TTE Kapus",
-                        "Notulen / Notulensi",
-                        "Dokumentasi",
-                        "Daftar Hadir / Daftar Hadir Lengkap TTD Penanggung Jawab Kegiatan",
-                        "Kuitansi dan Invoice",
-                        "Kuitansi Hotel",
-                        "Kuitansi Transport",
-                        "DPR Taksi Bandara",
-                        "Kuitansi Pesawat/Kereta / Tiket",
-                        "Boarding Pass Pesawat/Kereta",
-                        "Rekap Transport Riil",
-                        "Rincian Biaya Perjalanan Dinas (RPD)",
-                        "BAP",
-                        "SSP (Surat Setoran Pajak) / PPN / PPh",
-                        "NPWP",
-                        "Rekening Koran / Buku Tabungan",
-                        "CV + NIK/NIP (Narsum)",
-                        "Undangan Narsum / Permohonan Narsum",
-                        "Surat Tugas Dari K/L/Pihak Narsum atau SK",
-                        "Materi / Materi Pelatihan / Materi & Dokumentasi",
-                        "Daftar Hadir Narsum",
-                        "Berkas Pengadaan dan Pembayaran",
-                        "Sertifikat",
-                        "Kuitansi Pelatihan",
-                        "Form 8 Jam",
-                        "Surat Bukti UH & Transport",
+                        "Nominatif", "Surat Tugas", "Surat Bukti / Pengeluaran Asli",
+                        "DPR (Daftar Pengeluaran Riil)", "SPPD", "Undangan / Surat Undangan TTE Kapus",
+                        "Notulen / Notulensi", "Dokumentasi", "Daftar Hadir / Daftar Hadir Lengkap TTD Penanggung Jawab Kegiatan",
+                        "Kuitansi dan Invoice", "Kuitansi Hotel", "Kuitansi Transport",
+                        "DPR Taksi Bandara", "Kuitansi Pesawat/Kereta / Tiket", "Boarding Pass Pesawat/Kereta",
+                        "Rekap Transport Riil", "Rincian Biaya Perjalanan Dinas (RPD)", "BAP",
+                        "SSP (Surat Setoran Pajak) / PPN / PPh", "NPWP", "Rekening Koran / Buku Tabungan",
+                        "CV + NIK/NIP (Narsum)", "Undangan Narsum / Permohonan Narsum",
+                        "Surat Tugas Dari K/L/Pihak Narsum atau SK", "Materi / Materi Pelatihan / Materi & Dokumentasi",
+                        "Daftar Hadir Narsum", "Berkas Pengadaan dan Pembayaran", "Sertifikat",
+                        "Kuitansi Pelatihan", "Form 8 Jam", "Surat Bukti UH & Transport",
                         "Kwitansi Konsumsi (Makan dan Snack) TTD PJ"
                         ];
                         @endphp
@@ -80,32 +62,47 @@
 
                                 <div class="row mb-3">
                                     {{-- 1. SUMBER ANGGARAN --}}
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label fw-bold">Sumber Anggaran</label>
                                         <select name="sumber_anggaran" id="sumber_anggaran" class="form-select border-primary shadow-sm" required>
                                             <option value="">-- Pilih --</option>
                                             <option value="BGN" {{ old('sumber_anggaran') == 'BGN' ? 'selected' : '' }}>BGN</option>
                                             <option value="GF" {{ old('sumber_anggaran') == 'GF' ? 'selected' : '' }}>GF</option>
-                                            <option value="GUP" {{ old('sumber_anggaran') == 'GUP' ? 'selected' : '' }}>GUP</option>
+                                            <option value="GUP" {{ old('sumber_anggaran') == 'GUP' ? 'selected' : '' }}>APBN</option>
                                         </select>
                                     </div>
 
-                                    {{-- 2. BIDANG: Muncul jika GUP dipilih, Posisinya dekat Kode Unik --}}
-                                    <div class="col-md-4" id="container_bidang" style="display:none;">
+                                    {{-- 2. BIDANG --}}
+                                    <div class="col-md-3" id="container_bidang" style="display:none;">
                                         <label class="form-label fw-bold text-primary">BIDANG (GUP)</label>
                                         <select name="bidang" id="select_bidang" class="form-select border-primary shadow-sm">
-                                            <option value="" selected disabled>-- Pilih Bidang --</option>
-                                            <option value="TU">Tata Usaha (TU)</option>
-                                            <option value="SI">Sistem Informasi (SI)</option>
-                                            <option value="IF">Infra (IF)</option>
-                                            <option value="KM">Keamanan (KT)</option>
-                                            <option value="PR">Perencana (PR)</option>
-                                            <option value="AD">ADKLS (AD)</option>
+                                            <option value="" selected disabled>-- Pilih --</option>
+                                            <option value="TU">TU</option>
+                                            <option value="SI">SI</option>
+                                            <option value="IF">IF</option>
+                                            <option value="KM">KT</option>
+                                            <option value="PR">PR</option>
+                                            <option value="AD">AD</option>
                                         </select>
+                                    </div>
+
+                                    {{-- JENIS REALISASI --}}
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold text-success">Jenis Realisasi</label>
+                                        @if(Auth::user()->role === 'PPBJ')
+                                        <input type="text" class="form-control bg-light fw-bold" value="LS" readonly>
+                                        <input type="hidden" name="jenis_realisasi" value="LS">
+                                        @else
+                                        <select name="jenis_realisasi" id="jenis_realisasi" class="form-select border-success shadow-sm">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="LS" {{ old('jenis_realisasi') == 'LS' ? 'selected' : '' }}>LS</option>
+                                            <option value="GUP" {{ old('jenis_realisasi') == 'GUP' ? 'selected' : '' }}>GUP</option>
+                                        </select>
+                                        @endif
                                     </div>
 
                                     {{-- 3. KODE UNIK PLO --}}
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label text-primary fw-bold">Kode Unik PLO</label>
                                         <input type="text" name="kode_unik_plo" id="kode_unik_plo"
                                             class="form-control border-primary bg-light fw-bold"
@@ -128,8 +125,9 @@
 
                                 <div class="row mb-3">
                                     <div class="col-md-4">
-                                        <label class="form-label text-primary">AKUN</label>
-                                        <input type="text" name="akun" class="form-control border-primary" value="{{ $selectedCoa->kode_coa_item ?? old('akun') }}">
+                                        <label class="form-label text-primary">KODE AKUN</label>
+                                        <input type="text" name="akun" class="form-control border-primary"
+                                            value="{{ $selectedCoa->mak->akun->kode_akun ?? '' }}" readonly>
                                     </div>
                                     <div class="col-md-8">
                                         <label class="form-label">Penerima / Penyedia</label>
@@ -159,7 +157,7 @@
                                         <input type="number" step="0.01" name="pph23" class="form-control" value="0">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label small text-primary">PPh Final</label>
+                                        <label class="form-label small text-primary">PPh 22</label>
                                         <input type="number" step="0.01" name="pph_final" class="form-control border-primary" value="0">
                                     </div>
                                     <div class="col-md-3">
@@ -201,30 +199,33 @@
                                                     <div class="input-group input-group-sm">
                                                         <input type="file" name="dokumen[{{ $nama }}]" class="form-control doc-input" data-title="{{ $nama }}">
                                                     </div>
-                                                    <div class="file-name-display small text-primary mt-1" style="display:none; font-size: 0.75rem;"></div>
                                                 </div>
                                             </div>
                                         </div>
                                         @endforeach
+
+                                        <div id="additional-files-container"></div>
+
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-sm btn-outline-info w-100" id="btn-add-file">
+                                                <i class="fas fa-plus-circle me-1"></i> Tambah Berkas Lainnya (Tidak ada di list)
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- KOLOM KANAN: INFO & STATUS --}}
+                            {{-- KOLOM KANAN --}}
                             <div class="col-md-5 bg-light p-3 border-start">
                                 <div class="alert alert-warning mb-3 py-2 border-left-warning shadow-sm">
                                     <small class="fw-bold text-uppercase">Informasi Pagu COA:</small>
                                     <h6 class="mb-0 mt-1 fw-bold text-dark">{{ $selectedCoa->uraian ?? 'Data tidak ditemukan' }}</h6>
                                     <hr class="my-1">
                                     <small class="text-dark">
-                                        Sisa Pagu:
-                                        <strong class="text-danger">
-                                            Rp {{ number_format(($selectedCoa->jumlah ?? 0) - ($selectedCoa->realisasi_total ?? 0), 0, ',', '.') }}
-                                        </strong>
+                                        Sisa Pagu: <strong class="text-danger">Rp {{ number_format(($selectedCoa->jumlah ?? 0) - ($selectedCoa->realisasi_total ?? 0), 0, ',', '.') }}</strong>
                                     </small>
                                 </div>
 
-                                {{-- SILSILAH / HIERARCHY - TETAP ADA --}}
                                 <h5 class="text-secondary border-bottom pb-2 mb-3">Silsilah / Hierarchy</h5>
                                 <div id="info-box" class="small">
                                     <div class="mb-2">
@@ -246,25 +247,36 @@
                                 </div>
 
                                 <hr>
-
                                 <div class="mb-3">
                                     <label class="form-label">KIRIM STATUS KE:</label>
-                                    <select name="status_berkas" class="form-select border-primary shadow-sm">
-                                        <option value="Proses Verifikasi">Verifikator</option>
+                                    <select name="status_berkas" id="status_berkas" class="form-select border-primary shadow-sm">
+                                        @if(Auth::user()->role === 'PPBJ')
+                                        {{-- Jika PPBJ, langsung arahkan ke PPSPM --}}
+                                        <option value="Proses PPSPM" selected>Proses PPSPM</option>
                                         <option value="Draft">Simpan Draft</option>
+                                        @else
+                                        {{-- Default untuk PLO / Superadmin --}}
+                                        <option value="Proses Verifikasi" {{ old('status_berkas') == 'Proses Verifikasi' ? 'selected' : '' }}>Verifikator</option>
+                                        <option value="Draft" {{ old('status_berkas') == 'Draft' ? 'selected' : '' }}>Simpan Draft</option>
+                                        <option value="Proses PPSPM" {{ old('status_berkas') == 'Proses PPSPM' ? 'selected' : '' }}>Proses PPSPM</option>
+                                        <option value="Menunggu Finalisasi Bendahara" {{ old('status_berkas') == 'Menunggu Finalisasi Bendahara' ? 'selected' : '' }}>Menunggu Finalisasi Bendahara</option>
+                                        @endif
                                     </select>
                                 </div>
+
+                                {{-- Hanya render jika user memiliki role PPBJ --}}
+                                @if(Auth::user()->role === 'PPBJ')
+                                <div id="container_status_sp2d" class="form-check form-switch mb-3 p-3 bg-white border rounded shadow-sm" style="display: none;">
+                                    <input class="form-check-input ms-0 me-3" type="checkbox" name="status_sp2d" value="1" id="status_sp2d">
+                                    <label class="form-check-label fw-bold text-primary" for="status_sp2d">
+                                        STATUS SP2D (SUDAH TERBIT)
+                                    </label>
+                                </div>
+                                @endif
 
                                 <div class="mb-3">
                                     <label class="form-label">TGL PENYERAHAN BERKAS</label>
                                     <input type="date" name="tanggal_penyerahan_berkas" class="form-control" value="{{ date('Y-m-d') }}">
-                                </div>
-
-                                <div class="form-check form-switch mt-4 p-3 bg-white border rounded shadow-sm">
-                                    <input class="form-check-input ms-0 me-3" type="checkbox" name="status_digitalisasi" value="1" id="digitalCheck">
-                                    <label class="form-check-label fw-bold text-primary" for="digitalCheck">
-                                        STATUS BERKAS TERDIGITALISASI
-                                    </label>
                                 </div>
 
                                 <div class="mt-4">
@@ -293,7 +305,6 @@
 </div>
 
 <script>
-    // Inisialisasi Elemen
     const ploInput = document.getElementById('kode_unik_plo');
     const sumberInput = document.getElementById('sumber_anggaran');
     const noUrutInput = document.getElementById('no_urut');
@@ -301,7 +312,32 @@
     const containerBidang = document.getElementById('container_bidang');
     const userInitial = ploInput.getAttribute('data-user-initial');
 
-    // Fungsi Fetch No Urut & Update Kode
+    // Element untuk Checkbox SP2D
+    const statusSelect = document.getElementById('status_berkas');
+    const containerSP2D = document.getElementById('container_status_sp2d');
+    const checkboxSP2D = document.getElementById('status_sp2d');
+
+    // Fungsi Toggle Checkbox SP2D
+    function toggleSP2D() {
+        // Cek apakah elemen ada di halaman (hanya ada jika role PPBJ)
+        if (!containerSP2D) return;
+
+        const val = statusSelect.value;
+
+        // Logika kemunculan berdasarkan status berkas
+        if (val === 'Proses PPSPM' || val === 'Menunggu Finalisasi Bendahara') {
+            containerSP2D.style.display = 'block';
+        } else {
+            containerSP2D.style.display = 'none';
+            if (checkboxSP2D) checkboxSP2D.checked = false;
+        }
+    }
+
+    // Pastikan fungsi dipanggil saat ada perubahan pada select
+    if (statusSelect) {
+        statusSelect.addEventListener('change', toggleSP2D);
+    }
+
     function fetchNoUrut() {
         const sumber = sumberInput.value;
         const bidang = bidangSelect.value;
@@ -322,15 +358,11 @@
 
         if (sumber) {
             noUrutInput.value = "⏳...";
-
             const url = "{{ route('realisasi-v2.get-next-no-urut') }}";
-
             fetch(`${url}?sumber=${sumber}&bidang=${bidang}`)
                 .then(response => response.json())
                 .then(data => {
-                    // data.next_no_urut sekarang berupa angka biasa (1, 2, dst)
                     noUrutInput.value = data.next_no_urut;
-
                     let middlePart = "";
                     if (sumber === 'GUP') {
                         middlePart = bidang;
@@ -342,27 +374,27 @@
                         middlePart = sumber;
                     }
 
-                    // Hasil format di UI: [Initial].[Middle].[AngkaMurni]
                     ploInput.value = `${userInitial}.${middlePart}.${data.next_no_urut}`;
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     noUrutInput.value = "1";
                     ploInput.value = "";
                 });
         }
     }
 
-    // Event Listeners
     bidangSelect.addEventListener('change', fetchNoUrut);
     sumberInput.addEventListener('change', fetchNoUrut);
+    statusSelect.addEventListener('change', toggleSP2D);
 
-    // --- SCRIPT BERKAS ---
+    // Jalankan pengecekan SP2D saat halaman dimuat pertama kali
+    document.addEventListener('DOMContentLoaded', toggleSP2D);
+
+    // Script Counter Berkas
     document.querySelectorAll('.doc-input').forEach(input => {
         input.addEventListener('change', function() {
             const row = this.closest('.file-row');
             const counter = document.getElementById('file-counter');
-
             if (this.files.length > 0) {
                 row.style.borderLeftColor = "#4e73df";
                 row.style.backgroundColor = "#eaecf4";
@@ -370,15 +402,64 @@
                 row.style.borderLeftColor = "#e3e6f0";
                 row.style.backgroundColor = "#f8f9fc";
             }
-
-            const allInputs = document.querySelectorAll('.doc-input');
-            let count = 0;
-            allInputs.forEach(i => {
-                if (i.files.length > 0) count++;
-            });
+            const count = Array.from(document.querySelectorAll('.doc-input')).filter(i => i.files.length > 0).length;
             counter.innerText = `${count} Terpilih`;
             counter.className = count > 0 ? "badge bg-primary" : "badge bg-secondary";
         });
+    });
+
+    // Script untuk menambah input berkas dinamis
+    document.getElementById('btn-add-file').addEventListener('click', function() {
+        const container = document.getElementById('additional-files-container');
+        const uniqueId = Date.now(); // ID unik agar tidak bentrok
+
+        const html = `
+        <div class="file-row mb-2 p-2 rounded border-start border-4 additional-file" style="border-left-color: #17a2b8; background-color: #f0fbfc;">
+            <div class="row align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="custom_nama_berkas[]" class="form-control form-control-sm mb-1" placeholder="Ketik Nama Berkas..." required>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group input-group-sm">
+                        <input type="file" name="custom_dokumen[]" class="form-control doc-input-custom" required>
+                    </div>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-sm btn-danger btn-remove-file"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+    `;
+        container.insertAdjacentHTML('beforeend', html);
+    });
+
+    // Script untuk menghapus row yang baru ditambah
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remove-file') || e.target.closest('.btn-remove-file')) {
+            const row = e.target.closest('.file-row');
+            row.remove();
+            updateFileCounter(); // Panggil fungsi counter jika ada
+        }
+    });
+
+    // Update counter untuk menyertakan input kustom
+    function updateFileCounter() {
+        const staticDocs = Array.from(document.querySelectorAll('.doc-input')).filter(i => i.files.length > 0).length;
+        const customDocs = Array.from(document.querySelectorAll('.doc-input-custom')).filter(i => i.files.length > 0).length;
+        const total = staticDocs + customDocs;
+
+        const counter = document.getElementById('file-counter');
+        if (counter) {
+            counter.innerText = `${total} Terpilih`;
+            counter.className = total > 0 ? "badge bg-primary" : "badge bg-secondary";
+        }
+    }
+
+    // Delegasi event untuk input file kustom agar counter terupdate
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('doc-input-custom')) {
+            updateFileCounter();
+        }
     });
 </script>
 

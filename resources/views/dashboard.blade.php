@@ -2,224 +2,286 @@
 
 @section('page-header')
 <div class="page-header mb-4">
-    <div>
-        <h4 class="page-title mb-1">Dashboard Monitoring</h4>
-        <p class="text-muted small mb-0">Selamat Datang, <strong>{{ Auth::user()->name }}</strong> ({{ Auth::user()->role }})</p>
+    <div class="d-flex align-items-center">
+        <div class="me-3">
+            <div class="avatar avatar-xl bg-primary-gradient rounded-circle shadow-sm d-flex align-items-center justify-content-center text-white">
+                <i class="fas fa-user-check fa-lg"></i>
+            </div>
+        </div>
+        <div>
+            <h3 class="fw-bold mb-0">Ringkasan Anggaran</h3>
+            <p class="text-muted mb-0">Halo, <strong>{{ Auth::user()->name }}</strong>. Berikut adalah performa anggaran hari ini.</p>
+        </div>
     </div>
-    <div class="ms-md-auto py-2 py-md-0">
-        <button class="btn btn-label-info btn-round me-2">Download Report</button>
-        <a href="{{ route('realisasi-v2.index') }}" class="btn btn-primary btn-round">Lihat Realisasi</a>
+    <div class="ms-md-auto py-3 py-md-0">
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-white fw-bold px-3 border border-end-0">
+                <i class="fas fa-cloud-download-alt me-2 text-primary"></i>Export
+            </button>
+            <a href="{{ route('realisasi-v2.index') }}" class="btn btn-primary fw-bold px-4">
+                <i class="fas fa-plus-circle me-2"></i>Entri Baru
+            </a>
+        </div>
     </div>
 </div>
 @endsection
 
 @section('content')
-<div class="row">
-    <div class="col-sm-6 col-md-3">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-primary bubble-shadow-small">
-                            <i class="fas fa-wallet"></i>
-                        </div>
+<div class="row mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1 uppercase tracking-wider">TOTAL PAGU</p>
+                        <h3 class="fw-bold mb-0 mt-1">Rp 12.500.000</h3>
                     </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Total Pagu</p>
-                            <h4 class="card-title text-primary">Rp 12.5M</h4>
-                        </div>
+                    <div class="icon-shape bg-soft-primary text-primary rounded-3 px-3 py-2">
+                        <i class="fas fa-wallet fa-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-soft-success text-success fw-bold">
+                        <i class="fas fa-arrow-up me-1"></i> 2.5%
+                    </span>
+                    <span class="text-muted small ms-2">Dari target awal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1 uppercase tracking-wider">REALISASI</p>
+                        <h3 class="fw-bold mb-0 mt-1 text-success">Rp 8.125.000</h3>
+                    </div>
+                    <div class="icon-shape bg-soft-success text-success rounded-3 px-3 py-2">
+                        <i class="fas fa-chart-line fa-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress rounded-pill" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-md-3">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-success bubble-shadow-small">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold mb-1 uppercase tracking-wider">SISA PAGU</p>
+                        <h3 class="fw-bold mb-0 mt-1 text-warning">Rp 4.375.000</h3>
                     </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Realisasi</p>
-                            <h4 class="card-title text-success">Rp 8.2M</h4>
-                        </div>
+                    <div class="icon-shape bg-soft-warning text-warning rounded-3 px-3 py-2">
+                        <i class="fas fa-clock fa-lg"></i>
                     </div>
                 </div>
+                <p class="mb-0 mt-3 small text-muted"><i class="fas fa-info-circle me-1"></i> Tersisa 4 bulan lagi</p>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-md-3">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-warning bubble-shadow-small">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Sisa Pagu</p>
-                            <h4 class="card-title text-warning">Rp 4.3M</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-md-3">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-danger bubble-shadow-small">
-                            <i class="fas fa-percentage"></i>
-                        </div>
-                    </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Penyerapan</p>
-                            <h4 class="card-title text-danger">65.4%</h4>
-                        </div>
-                    </div>
-                </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4 text-center">
+                <p class="text-muted small fw-bold mb-2 uppercase tracking-wider">PROGRES PENYERAPAN</p>
+                <h2 class="fw-black mb-0 text-primary">65.4%</h2>
+                <small class="text-muted">Target Tahunan: 95%</small>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-8">
-        <div class="card card-round">
-            <div class="card-header">
-                <div class="card-head-row">
-                    <div class="card-title">Statistik Realisasi Bulanan</div>
-                    <div class="card-tools">
-                        <button class="btn btn-label-info btn-sm btn-icon"><i class="fa fa-print"></i></button>
-                    </div>
-                </div>
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between">
+                <h5 class="fw-bold mb-0 text-dark">Laporan Realisasi Bulanan</h5>
+                <select class="form-select form-select-sm w-auto border-0 bg-light fw-bold">
+                    <option>Tahun 2024</option>
+                    <option>Tahun 2023</option>
+                </select>
             </div>
-            <div class="card-body">
-                <div class="chart-container" style="min-height: 375px">
-                    <canvas id="statisticsChart"></canvas>
+            <div class="card-body p-4">
+                <div style="height: 350px">
+                    <canvas id="modernChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card card-round">
-            <div class="card-header">
-                <div class="card-title">Antrian Berkas Aktif</div>
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0 text-dark">Antrian Berkas</h5>
             </div>
-            <div class="card-body pb-0">
-                <div class="d-flex justify-content-between mb-3 align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-sm me-2">
-                            <span class="avatar-title rounded-circle border border-white bg-info">V</span>
+            <div class="card-body p-4">
+                <div class="timeline-task">
+                    <div class="d-flex mb-4">
+                        <div class="flex-shrink-0">
+                            <div class="avatar avatar-sm rounded-circle bg-soft-info text-info fw-bold shadow-sm border border-info">V</div>
                         </div>
-                        <span class="text-muted">Proses Verifikasi</span>
-                    </div>
-                    <span class="fw-bold">12 Berkas</span>
-                </div>
-                <div class="d-flex justify-content-between mb-3 align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-sm me-2">
-                            <span class="avatar-title rounded-circle border border-white bg-primary">P</span>
+                        <div class="ms-3 w-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold">Verifikasi Berkas</h6>
+                                <span class="badge rounded-pill bg-info">12 Berkas</span>
+                            </div>
+                            <small class="text-muted">Review kelengkapan dokumen</small>
                         </div>
-                        <span class="text-muted">Proses PPK</span>
                     </div>
-                    <span class="fw-bold">5 Berkas</span>
-                </div>
-                <div class="d-flex justify-content-between mb-3 align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-sm me-2">
-                            <span class="avatar-title rounded-circle border border-white bg-warning">B</span>
+
+                    <div class="d-flex mb-4">
+                        <div class="flex-shrink-0">
+                            <div class="avatar avatar-sm rounded-circle bg-soft-primary text-primary fw-bold shadow-sm border border-primary">P</div>
                         </div>
-                        <span class="text-muted">Proses Bendahara</span>
+                        <div class="ms-3 w-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold">Proses PPK</h6>
+                                <span class="badge rounded-pill bg-primary">5 Berkas</span>
+                            </div>
+                            <small class="text-muted">Persetujuan pejabat pengadaan</small>
+                        </div>
                     </div>
-                    <span class="fw-bold">8 Berkas</span>
+
+                    <div class="d-flex mb-4">
+                        <div class="flex-shrink-0">
+                            <div class="avatar avatar-sm rounded-circle bg-soft-warning text-warning fw-bold shadow-sm border border-warning">B</div>
+                        </div>
+                        <div class="ms-3 w-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold">Bendahara</h6>
+                                <span class="badge rounded-pill bg-warning text-dark">8 Berkas</span>
+                            </div>
+                            <small class="text-muted">Persiapan pencairan dana</small>
+                        </div>
+                    </div>
                 </div>
-                <hr>
-                <div class="text-center pb-3">
-                    <a href="{{ route('realisasi-v2.index') }}" class="btn btn-sm btn-link text-primary fw-bold">Lihat Semua Antrian</a>
+
+                <div class="mt-4 pt-2 border-top">
+                    <a href="{{ route('realisasi-v2.index') }}" class="btn btn-light w-100 fw-bold py-2 rounded-3 text-primary transition-all hover-up">
+                        Lihat Semua Detail <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-soft-primary {
+        background-color: rgba(23, 125, 255, 0.1);
+    }
+
+    .bg-soft-success {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    .bg-soft-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .bg-soft-info {
+        background-color: rgba(23, 162, 184, 0.1);
+    }
+
+    .bg-primary-gradient {
+        background: linear-gradient(135deg, #177dff 0%, #0052b1 100%);
+    }
+
+    .rounded-4 {
+        border-radius: 1.25rem !important;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
+    }
+
+    .tracking-wider {
+        letter-spacing: 0.05em;
+    }
+
+    .fw-black {
+        font-weight: 900;
+    }
+
+    .avatar-xl {
+        width: 48px;
+        height: 48px;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-3px);
+    }
+</style>
 @endsection
 
 @push('scripts')
 <script src="{{ asset('assets/js/plugin/chart.js/chart.min.js') }}"></script>
 <script>
-    var ctx = document.getElementById('statisticsChart').getContext('2d');
-    var statisticsChart = new Chart(ctx, {
+    var ctx = document.getElementById('modernChart').getContext('2d');
+
+    // Gradasi Warna Biru
+    var gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientFill.addColorStop(0, "rgba(23, 125, 255, 0.4)");
+    gradientFill.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    var myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"],
             datasets: [{
-                label: "Realisasi",
-                borderColor: '#177dff',
-                pointBackgroundColor: 'rgba(23, 125, 255, 0.6)',
-                pointRadius: 0,
-                backgroundColor: 'rgba(23, 125, 255, 0.1)',
-                legendColor: '#177dff',
+                label: "Realisasi (Juta)",
+                borderColor: "#177dff",
+                backgroundColor: gradientFill,
+                pointBackgroundColor: "#fff",
+                pointBorderColor: "#177dff",
+                pointBorderWidth: 3,
+                pointRadius: 5,
+                pointHoverRadius: 8,
                 fill: true,
-                borderWidth: 2,
-                data: [542, 480, 430, 550, 530, 453, 380, 434, 568, 610, 700, 900]
+                borderWidth: 4,
+                tension: 0.4, // Membuat line melengkung (smooth)
+                data: [420, 380, 560, 490, 610, 520, 680, 740, 810, 920, 950, 1100]
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            legend: {
-                display: false
-            },
-            tooltips: {
-                bodySpacing: 4,
-                mode: "nearest",
-                intersect: 0,
-                position: "nearest",
-                xPadding: 10,
-                yPadding: 10,
-                caretPadding: 10
-            },
-            layout: {
-                padding: {
-                    left: 5,
-                    right: 5,
-                    top: 15,
-                    bottom: 15
+            plugins: {
+                legend: {
+                    display: false
                 }
             },
             scales: {
-                yAxes: [{
-                    ticks: {
-                        fontStyle: "500",
-                        beginAtZero: false,
-                        maxTicksLimit: 5,
-                        padding: 10
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: "#f8f9fa",
+                        drawBorder: false
                     },
-                    gridLines: {
-                        drawTicks: false,
+                    ticks: {
+                        color: "#adb5bd"
+                    }
+                },
+                x: {
+                    grid: {
                         display: false
-                    }
-                }],
-                xAxes: [{
-                    gridLines: {
-                        zeroLineColor: "transparent"
                     },
                     ticks: {
-                        padding: 20,
-                        fontStyle: "500"
+                        color: "#adb5bd"
                     }
-                }]
+                }
             }
         }
     });

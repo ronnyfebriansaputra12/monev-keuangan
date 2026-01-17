@@ -7,7 +7,13 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        {{ Auth::user()->role == 'Bendahara' ? 'Verifikasi & Input GUP/SPBY (Role: Bendahara)' : 'Edit / Revisi Realisasi (Role: PLO)' }}
+                        @if(Auth::user()->role == 'Bendahara')
+                        Verifikasi & Input GUP/SPBY (Role: Bendahara)
+                        @elseif(Auth::user()->role == 'PPBJ')
+                        Edit / Revisi Realisasi (Role: PPBJ)
+                        @else
+                        Edit / Revisi Realisasi (Role: PLO)
+                        @endif
                     </h6>
                     <a href="{{ route('realisasi-v2.index', ['coa_item_id' => $realisasiV2->coa_item_id]) }}" class="btn btn-sm btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
@@ -39,15 +45,15 @@
                         $satker = $prog?->satker;
 
                         $list_berkas = [
-                            "Nominatif", "Surat Tugas", "Surat Bukti / Pengeluaran Asli", "DPR (Daftar Pengeluaran Riil)", "SPPD",
-                            "Undangan / Surat Undangan TTE Kapus", "Notulen / Notulensi", "Dokumentasi",
-                            "Daftar Hadir / Daftar Hadir Lengkap TTD Penanggung Jawab Kegiatan", "Kuitansi dan Invoice",
-                            "Kuitansi Hotel", "Kuitansi Transport", "DPR Taksi Bandara", "Kuitansi Pesawat/Kereta / Tiket",
-                            "Boarding Pass Pesawat/Kereta", "Rekap Transport Riil", "Rincian Biaya Perjalanan Dinas (RPD)",
-                            "BAP", "SSP (Surat Setoran Pajak) / PPN / PPh", "NPWP", "Rekening Koran / Buku Tabungan",
-                            "CV + NIK/NIP (Narsum)", "Undangan Narsum / Permohonan Narsum", "Surat Tugas Dari K/L/Pihak Narsum atau SK",
-                            "Materi / Materi Pelatihan / Materi & Dokumentasi", "Daftar Hadir Narsum", "Berkas Pengadaan dan Pembayaran",
-                            "Sertifikat", "Kuitansi Pelatihan", "Form 8 Jam", "Surat Bukti UH & Transport", "Kwitansi Konsumsi (Makan dan Snack) TTD PJ"
+                        "Nominatif", "Surat Tugas", "Surat Bukti / Pengeluaran Asli", "DPR (Daftar Pengeluaran Riil)", "SPPD",
+                        "Undangan / Surat Undangan TTE Kapus", "Notulen / Notulensi", "Dokumentasi",
+                        "Daftar Hadir / Daftar Hadir Lengkap TTD Penanggung Jawab Kegiatan", "Kuitansi dan Invoice",
+                        "Kuitansi Hotel", "Kuitansi Transport", "DPR Taksi Bandara", "Kuitansi Pesawat/Kereta / Tiket",
+                        "Boarding Pass Pesawat/Kereta", "Rekap Transport Riil", "Rincian Biaya Perjalanan Dinas (RPD)",
+                        "BAP", "SSP (Surat Setoran Pajak) / PPN / PPh", "NPWP", "Rekening Koran / Buku Tabungan",
+                        "CV + NIK/NIP (Narsum)", "Undangan Narsum / Permohonan Narsum", "Surat Tugas Dari K/L/Pihak Narsum atau SK",
+                        "Materi / Materi Pelatihan / Materi & Dokumentasi", "Daftar Hadir Narsum", "Berkas Pengadaan dan Pembayaran",
+                        "Sertifikat", "Kuitansi Pelatihan", "Form 8 Jam", "Surat Bukti UH & Transport", "Kwitansi Konsumsi (Makan dan Snack) TTD PJ"
                         ];
 
                         $lampiranLama = is_array($realisasiV2->lampiran) ? $realisasiV2->lampiran : json_decode($realisasiV2->lampiran, true) ?? [];
@@ -65,32 +71,46 @@
 
                                 <div class="row mb-3">
                                     {{-- 1. SUMBER ANGGARAN --}}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold">Sumber Anggaran</label>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold small">Sumber Anggaran</label>
                                         <select name="sumber_anggaran" id="sumber_anggaran" class="form-select border-primary shadow-sm" required {{ $isLocked ? 'disabled' : '' }}>
                                             <option value="BGN" {{ $realisasiV2->sumber_anggaran == 'BGN' ? 'selected' : '' }}>BGN</option>
                                             <option value="GF" {{ $realisasiV2->sumber_anggaran == 'GF' ? 'selected' : '' }}>GF</option>
-                                            <option value="GUP" {{ $realisasiV2->sumber_anggaran == 'GUP' ? 'selected' : '' }}>GUP</option>
+                                            <option value="GUP" {{ $realisasiV2->sumber_anggaran == 'GUP' ? 'selected' : '' }}>APBN</option>
                                         </select>
                                     </div>
 
-                                    {{-- 2. BIDANG (Muncul jika GUP) --}}
-                                    <div class="col-md-4" id="container_bidang" style="{{ $realisasiV2->sumber_anggaran == 'GUP' ? '' : 'display:none;' }}">
-                                        <label class="form-label fw-bold text-primary">BIDANG (GUP)</label>
+                                    {{-- 2. BIDANG --}}
+                                    <div class="col-md-3" id="container_bidang" style="{{ $realisasiV2->sumber_anggaran == 'GUP' ? '' : 'display:none;' }}">
+                                        <label class="form-label fw-bold text-primary small">BIDANG (GUP)</label>
                                         <select name="bidang" id="select_bidang" class="form-select border-primary shadow-sm" {{ $isLocked ? 'disabled' : '' }}>
-                                            @foreach(['TU' => 'Tata Usaha (TU)', 'SI' => 'Sistem Informasi (SI)', 'IF' => 'Infra (IF)', 'KM' => 'Keamanan (KT)', 'PR' => 'Perencana (PR)', 'AD' => 'ADKLS (AD)'] as $val => $label)
-                                                <option value="{{ $val }}" {{ $realisasiV2->bidang == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                            @foreach(['TU' => 'TU', 'SI' => 'SI', 'IF' => 'IF', 'KM' => 'KT', 'PR' => 'PR', 'AD' => 'AD'] as $val => $label)
+                                            <option value="{{ $val }}" {{ $realisasiV2->bidang == $val ? 'selected' : '' }}>{{ $label }}</option>
                                             @endforeach
                                         </select>
                                     </div>
 
+                                    {{-- JENIS REALISASI --}}
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold text-success small">Jenis Realisasi</label>
+                                        @if(Auth::user()->role === 'PPBJ')
+                                        <input type="text" class="form-control bg-light fw-bold" value="LS" readonly>
+                                        <input type="hidden" name="jenis_realisasi" value="LS">
+                                        @else
+                                        <select name="jenis_realisasi" id="jenis_realisasi" class="form-select border-success shadow-sm" {{ $isLocked ? 'disabled' : '' }}>
+                                            <option value="LS" {{ $realisasiV2->jenis_realisasi == 'LS' ? 'selected' : '' }}>LS</option>
+                                            <option value="GUP" {{ $realisasiV2->jenis_realisasi == 'GUP' ? 'selected' : '' }}>GUP</option>
+                                        </select>
+                                        @endif
+                                    </div>
+
                                     {{-- 3. KODE UNIK PLO --}}
-                                    <div class="col-md-4">
-                                        <label class="form-label text-primary fw-bold">ID Transaksi (PLO)</label>
-                                        <input type="text" name="kode_unik_plo" id="kode_unik_plo" class="form-control border-primary bg-light fw-bold" 
-                                               value="{{ old('kode_unik_plo', $realisasiV2->kode_unik_plo) }}" required 
-                                               {{ (Auth::user()->role == 'Bendahara' || $isLocked) ? 'readonly' : '' }}
-                                               data-user-initial="{{ Auth::user()->plo_code ?? 'U' }}">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-primary fw-bold small">ID Transaksi</label>
+                                        <input type="text" name="kode_unik_plo" id="kode_unik_plo" class="form-control border-primary bg-light fw-bold"
+                                            value="{{ old('kode_unik_plo', $realisasiV2->kode_unik_plo) }}" required
+                                            {{ (Auth::user()->role == 'Bendahara' || $isLocked) ? 'readonly' : '' }}
+                                            data-user-initial="{{ Auth::user()->plo_code ?? 'U' }}">
                                     </div>
                                 </div>
 
@@ -142,7 +162,7 @@
                                         <input type="number" step="0.01" name="pph23" class="form-control" value="{{ old('pph23', $realisasiV2->pph23) }}" {{ $isLocked ? 'readonly' : '' }}>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-primary">PPh Final</label>
+                                        <label class="form-label text-primary">PPh 22</label>
                                         <input type="number" step="0.01" name="pph_final" class="form-control border-primary" value="{{ old('pph_final', $realisasiV2->pph_final) }}" {{ $isLocked ? 'readonly' : '' }}>
                                     </div>
                                     <div class="col-md-3">
@@ -157,7 +177,9 @@
                                         <h6 class="text-primary fw-bold mb-0"><i class="fas fa-file-upload me-2"></i> Update Dokumen</h6>
                                         <span class="badge bg-info" id="file-counter">{{ count($lampiranLama) }} Berkas Tersimpan</span>
                                     </div>
-                                    <div id="wrapper-berkas" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                                    <div id="wrapper-berkas" style="max-height: 450px; overflow-y: auto; padding-right: 8px;">
+
+                                        {{-- 1. BERKAS DARI LIST STATIS --}}
                                         @foreach($list_berkas as $nama)
                                         @php
                                         $fileExist = collect($lampiranLama)->firstWhere('nama_berkas', $nama);
@@ -180,7 +202,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="col-md-7">
-                                                    @if(Auth::user()->role == 'PLO')
+                                                    @if(in_array(Auth::user()->role, ['PLO', 'PPBJ']))
                                                     <input type="file" name="dokumen[{{ $nama }}]" class="form-control form-control-sm doc-input shadow-sm">
                                                     <div class="file-name-display small text-primary mt-1" style="display:none; font-size: 0.7rem;"></div>
                                                     @endif
@@ -188,6 +210,41 @@
                                             </div>
                                         </div>
                                         @endforeach
+
+                                        {{-- 2. BERKAS KUSTOM (LAMA) --}}
+                                        @foreach($lampiranLama as $file)
+                                        @if(!in_array($file['nama_berkas'], $list_berkas))
+                                        <div class="file-row mb-2 p-2 rounded border-start border-4 border-info bg-light">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-5">
+                                                    <label class="form-label small fw-bold mb-0 d-block text-truncate">
+                                                        <i class="fas fa-check-circle text-info me-2"></i>{{ $file['nama_berkas'] }} <span class="badge bg-info p-1" style="font-size: 0.6rem">KUSTOM</span>
+                                                    </label>
+                                                    <a href="{{ asset('storage/' . $file['path']) }}" target="_blank" class="x-small text-primary fw-bold">
+                                                        <i class="fas fa-eye me-1"></i>Lihat File
+                                                    </a>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    @if(in_array(Auth::user()->role, ['PLO', 'PPBJ']))
+                                                    <input type="file" name="dokumen[{{ $file['nama_berkas'] }}]" class="form-control form-control-sm doc-input shadow-sm">
+                                                    <div class="file-name-display small text-primary mt-1" style="display:none; font-size: 0.7rem;"></div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
+                                        @endforeach
+
+                                        {{-- 3. CONTAINER UNTUK BERKAS KUSTOM BARU --}}
+                                        <div id="additional-files-container"></div>
+
+                                        @if(in_array(Auth::user()->role, ['PLO', 'PPBJ']))
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-sm btn-outline-info w-100" id="btn-add-file">
+                                                <i class="fas fa-plus-circle me-1"></i> Tambah Berkas Lainnya (Kustom)
+                                            </button>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -232,27 +289,55 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-bold small">No. Urut Arsip SPBY</label>
-                                        <input type="text" name="no_urut_arsip_spby" class="form-control border-primary form-control-sm" value="{{ old('no_urut_arsip_spby', $realisasiV2->no_urut_arsip_spby) }}" required>
+                                        <input type="text" name="no_urut_arsip_spby" class="form-control border-primary form-control-sm" value="{{ old('no_urut_arsip_spby', $realisasiV2->no_urut_arsip_spby) }}">
                                     </div>
                                 </div>
                                 @endif
-
                                 <div class="mb-3">
                                     <label class="form-label small">KIRIM STATUS KE:</label>
+
+                                    {{-- Kondisi 1: Jika status Menunggu Finalisasi tapi yang buka BUKAN Bendahara (Read Only) --}}
                                     @if($realisasiV2->status_berkas == 'Menunggu Finalisasi Bendahara' && Auth::user()->role != 'Bendahara')
-                                        <div class="p-2 bg-white border rounded fw-bold text-success small">{{ $realisasiV2->status_berkas }}</div>
-                                        <input type="hidden" name="status_berkas" value="{{ $realisasiV2->status_berkas }}">
+                                    <div class="p-2 bg-white border rounded fw-bold text-success small">
+                                        {{ $realisasiV2->status_berkas }}
+                                    </div>
+                                    <input type="hidden" name="status_berkas" value="{{ $realisasiV2->status_berkas }}">
+
                                     @else
-                                        <select name="status_berkas" class="form-select form-select-sm border-primary">
-                                            @if(Auth::user()->role == 'Bendahara')
-                                                <option value="Proses PPK" selected>Teruskan ke PPK</option>
-                                                <option value="Ditolak/Revisi">Kembalikan (Revisi)</option>
-                                            @else
-                                                <option value="Proses Verifikasi" {{ $realisasiV2->status_berkas == 'Proses Verifikasi' ? 'selected' : '' }}>Verifikator (Ajukan)</option>
-                                                <option value="Draft" {{ $realisasiV2->status_berkas == 'Draft' ? 'selected' : '' }}>Draft</option>
-                                            @endif
-                                        </select>
+                                    <select name="status_berkas" id="status_berkas" class="form-select form-select-sm border-primary">
+
+                                        @if(Auth::user()->role == 'Bendahara')
+                                        {{-- PERBAIKAN DI SINI: Jika Bendahara sedang edit di tahap akhir --}}
+                                        @if($realisasiV2->status_berkas == 'Menunggu Finalisasi Bendahara')
+                                        <option value="Menunggu Finalisasi Bendahara" selected>Menunggu Finalisasi Bendahara (Tetap di Bendahara)</option>
+                                        <option value="Proses PPK">Selesai & Teruskan ke PPK</option>
+                                        @else
+                                        <option value="Proses PPK" selected>Teruskan ke PPK</option>
+                                        @endif
+                                        <option value="Ditolak/Revisi">Kembalikan (Revisi)</option>
+
+                                        @elseif(Auth::user()->role == 'PPBJ')
+                                        <option value="Proses PPSPM" {{ $realisasiV2->status_berkas == 'Proses PPSPM' ? 'selected' : '' }}>Proses PPSPM (Ajukan)</option>
+                                        <option value="Draft" {{ $realisasiV2->status_berkas == 'Draft' ? 'selected' : '' }}>Draft (Simpan Sementara)</option>
+
+                                        @else
+                                        {{-- Default PLO / Superadmin --}}
+                                        <option value="Proses Verifikasi" {{ $realisasiV2->status_berkas == 'Proses Verifikasi' ? 'selected' : '' }}>Verifikator (Ajukan)</option>
+                                        <option value="Draft" {{ $realisasiV2->status_berkas == 'Draft' ? 'selected' : '' }}>Draft</option>
+                                        <option value="Proses PPSPM" {{ $realisasiV2->status_berkas == 'Proses PPSPM' ? 'selected' : '' }}>Proses PPSPM</option>
+                                        <option value="Menunggu Finalisasi Bendahara" {{ $realisasiV2->status_berkas == 'Menunggu Finalisasi Bendahara' ? 'selected' : '' }}>Menunggu Finalisasi Bendahara</option>
+                                        @endif
+
+                                    </select>
                                     @endif
+                                </div>
+
+                                {{-- NEW: Checkbox Status SP2D (Kondisional) --}}
+                                <div id="container_status_sp2d" class="form-check form-switch mb-3 p-3 bg-white border rounded shadow-sm" style="display: none;">
+                                    <input class="form-check-input ms-0 me-3" type="checkbox" name="status_sp2d" value="1" id="status_sp2d_check" {{ $realisasiV2->status_sp2d ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-bold text-primary small" for="status_sp2d_check">
+                                        SUDAH TERBIT SP2D
+                                    </label>
                                 </div>
 
                                 <div class="mb-3">
@@ -298,6 +383,20 @@
     const containerBidang = document.getElementById('container_bidang');
     const userInitial = ploInput.getAttribute('data-user-initial');
 
+    // Checkbox SP2D Logic
+    const statusSelect = document.getElementById('status_berkas');
+    const containerSP2D = document.getElementById('container_status_sp2d');
+
+    function toggleSP2D() {
+        if (!statusSelect) return;
+        const val = statusSelect.value;
+        if (val === 'Proses PPSPM' || val === 'Menunggu Finalisasi Bendahara') {
+            containerSP2D.style.display = 'block';
+        } else {
+            containerSP2D.style.display = 'none';
+        }
+    }
+
     function fetchNoUrut() {
         const sumber = sumberInput.value;
         const bidang = bidangSelect.value;
@@ -311,42 +410,91 @@
             bidangSelect.removeAttribute('required');
         }
 
-        // Logic Fetch No Urut (Hanya jika role PLO dan bukan status locked)
-        @if(Auth::user()->role == 'PLO')
-            noUrutInput.value = "⏳...";
-            const url = "{{ route('realisasi-v2.get-next-no-urut') }}";
-            fetch(`${url}?sumber=${sumber}&bidang=${bidang}`)
-                .then(response => response.json())
-                .then(data => {
-                    noUrutInput.value = data.next_no_urut;
-                    let middlePart = (sumber === 'GUP') ? bidang : (sumber === 'BGN' ? 'MG' : (sumber === 'GF' ? 'GF' : sumber));
-                    ploInput.value = `${userInitial}.${middlePart}.${data.next_no_urut}`;
-                });
+        @if(in_array(Auth::user()->role, ['PLO', 'PPBJ']))
+        noUrutInput.value = "⏳...";
+        const url = "{{ route('realisasi-v2.get-next-no-urut') }}";
+        fetch(`${url}?sumber=${sumber}&bidang=${bidang}`)
+            .then(response => response.json())
+            .then(data => {
+                noUrutInput.value = data.next_no_urut;
+                let middlePart = (sumber === 'GUP') ? bidang : (sumber === 'BGN' ? 'MG' : (sumber === 'GF' ? 'GF' : sumber));
+                ploInput.value = `${userInitial}.${middlePart}.${data.next_no_urut}`;
+            });
         @endif
     }
 
+    if (statusSelect) statusSelect.addEventListener('change', toggleSP2D);
     sumberInput.addEventListener('change', fetchNoUrut);
     bidangSelect.addEventListener('change', fetchNoUrut);
 
-    // Style Berkas Change
-    document.querySelectorAll('.doc-input').forEach(input => {
-        input.addEventListener('change', function() {
-            const row = this.closest('.file-row');
+    // Initial load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleSP2D();
+    });
+
+    // Handle display nama file baru
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('doc-input') || e.target.classList.contains('doc-input-custom')) {
+            const row = e.target.closest('.file-row');
             const nameDisplay = row.querySelector('.file-name-display');
-            if (this.files.length > 0) {
+            if (e.target.files.length > 0) {
                 row.style.backgroundColor = "#eaf2ff";
                 row.style.borderLeftColor = "#4e73df";
-                nameDisplay.style.display = "block";
-                nameDisplay.innerHTML = `<i class="fas fa-sync me-1"></i> Baru: ${this.files[0].name}`;
+                if (nameDisplay) {
+                    nameDisplay.style.display = "block";
+                    nameDisplay.innerHTML = `<i class="fas fa-sync me-1"></i> Baru: ${e.target.files[0].name}`;
+                }
             }
+        }
+    });
+
+    // Script Tambah Berkas Kustom di Edit
+    const btnAddFile = document.getElementById('btn-add-file');
+    if (btnAddFile) {
+        btnAddFile.addEventListener('click', function() {
+            const container = document.getElementById('additional-files-container');
+            const html = `
+                <div class="file-row mb-2 p-2 rounded border-start border-4 additional-file shadow-sm" style="border-left-color: #17a2b8; background-color: #f0fbfc;">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <input type="text" name="custom_nama_berkas[]" class="form-control form-control-sm mb-1" placeholder="Nama Berkas Kustom..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="file" name="custom_dokumen[]" class="form-control form-control-sm doc-input-custom" required>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button type="button" class="btn btn-sm btn-danger btn-remove-file"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', html);
         });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-remove-file')) {
+            e.target.closest('.file-row').remove();
+        }
     });
 </script>
 
 <style>
-    .x-small { font-size: 0.65rem; }
-    #wrapper-berkas::-webkit-scrollbar { width: 5px; }
-    #wrapper-berkas::-webkit-scrollbar-thumb { background: #d1d3e2; border-radius: 10px; }
-    .file-row:hover { background-color: #f1f3f9 !important; border-left-color: #4e73df !important; }
+    .x-small {
+        font-size: 0.65rem;
+    }
+
+    #wrapper-berkas::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    #wrapper-berkas::-webkit-scrollbar-thumb {
+        background: #d1d3e2;
+        border-radius: 10px;
+    }
+
+    .file-row:hover {
+        background-color: #f1f3f9 !important;
+        border-left-color: #4e73df !important;
+    }
 </style>
 @endsection

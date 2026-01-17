@@ -40,9 +40,20 @@
 
     /* ANIMASI KEDIP SOFT (MENGGUNAKAN RGBA) */
     @keyframes blink-soft {
-        0% { background-color: #f44336; color: white; }
-        50% { background-color: rgba(244, 67, 54, 0.15); color: #f44336; }
-        100% { background-color: #f44336; color: white; }
+        0% {
+            background-color: #f44336;
+            color: white;
+        }
+
+        50% {
+            background-color: rgba(244, 67, 54, 0.15);
+            color: #f44336;
+        }
+
+        100% {
+            background-color: #f44336;
+            color: white;
+        }
     }
 
     .blink-danger {
@@ -65,18 +76,40 @@
         text-align: center;
     }
 
-    .count-default { background: #eaecf4; color: #5a5c69; }
-    .count-warning { background: #fff4e5; color: #ff9800; }
-    .count-danger { background: #ffebee; color: #f44336; }
-    .count-success { background: #e8f5e9; color: #4caf50; }
-    .count-info { background: #e3f2fd; color: #2196f3; }
+    .count-default {
+        background: #eaecf4;
+        color: #5a5c69;
+    }
+
+    .count-warning {
+        background: #fff4e5;
+        color: #ff9800;
+    }
+
+    .count-danger {
+        background: #ffebee;
+        color: #f44336;
+    }
+
+    .count-success {
+        background: #e8f5e9;
+        color: #4caf50;
+    }
+
+    .count-info {
+        background: #e3f2fd;
+        color: #2196f3;
+    }
 
     .nav-link.active .badge-count {
         background: rgba(255, 255, 255, 0.25) !important;
         color: #ffffff !important;
     }
 
-    #realisasiTable { border-collapse: collapse !important; }
+    #realisasiTable {
+        border-collapse: collapse !important;
+    }
+
     #realisasiTable thead th {
         background-color: #f8f9fc;
         text-transform: uppercase;
@@ -157,14 +190,14 @@
                         @php
                         $currentStatus = request('status_berkas');
                         $statusConfig = [
-                            'Draft' => ['color' => 'count-default'],
-                            'Menunggu Finalisasi Bendahara' => ['color' => 'count-warning'],
-                            'Ditolak/Revisi' => ['color' => 'count-danger'],
-                            'Proses Verifikasi' => ['color' => 'count-info'],
-                            'Terverifikasi' => ['color' => 'count-info'],
-                            'Proses PPK' => ['color' => 'count-info'],
-                            'Proses PPSPM' => ['color' => 'count-info'],
-                            'Selesai' => ['color' => 'count-success'],
+                        'Draft' => ['color' => 'count-default'],
+                        'Menunggu Finalisasi Bendahara' => ['color' => 'count-warning'],
+                        'Ditolak/Revisi' => ['color' => 'count-danger'],
+                        'Proses Verifikasi' => ['color' => 'count-info'],
+                        'Terverifikasi' => ['color' => 'count-info'],
+                        'Proses PPK' => ['color' => 'count-info'],
+                        'Proses PPSPM' => ['color' => 'count-info'],
+                        'Selesai' => ['color' => 'count-success'],
                         ];
                         $totalCountAll = isset($counts) ? array_sum($counts) : 0;
                         @endphp
@@ -178,8 +211,8 @@
                             </li>
                             @foreach($statusConfig as $statusName => $cfg)
                             @php
-                                // Logika Kedip Soft: Hanya jika status Ditolak dan jumlah > 0
-                                $shouldBlink = ($statusName === 'Ditolak/Revisi' && isset($counts[$statusName]) && $counts[$statusName] > 0);
+                            // Logika Kedip Soft: Hanya jika status Ditolak dan jumlah > 0
+                            $shouldBlink = ($statusName === 'Ditolak/Revisi' && isset($counts[$statusName]) && $counts[$statusName] > 0);
                             @endphp
                             <li class="nav-item">
                                 <a class="nav-link {{ $currentStatus == $statusName ? 'active' : '' }} {{ $shouldBlink ? 'blink-danger' : '' }}"
@@ -198,6 +231,21 @@
                                 <input type="hidden" name="status_berkas" value="{{ $currentStatus }}">
 
                                 <div class="row">
+                                    {{-- FILTER KHUSUS PPSPM & BENDAHARA --}}
+                                    @if(in_array(auth()->user()->role, ['PPSPM', 'Bendahara', 'PPBJ', 'PLO','Verifikator', 'PPK']))
+                                    <div class="col-md-3 mb-3">
+                                        <label class="filter-label text-primary font-weight-bold">
+                                            <i class="fas fa-filter mr-1"></i> Jenis Realisasi
+                                        </label>
+                                        <select name="jenis_realisasi" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
+                                            <option value="">-- Semua Jenis --</option>
+                                            @foreach($listJenisRealisasi as $jenis)
+                                            <option value="{{ $jenis }}" {{ request('jenis_realisasi') == $jenis ? 'selected' : '' }}>{{ $jenis }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @endif
+
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Tanggal Mulai</label>
                                         <input type="date" name="tgl_awal" class="form-control form-control-sm" value="{{ request('tgl_awal') }}" onchange="this.form.submit()">
@@ -215,6 +263,9 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Filter RO</label>
                                         <select name="filter_ro" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
@@ -224,9 +275,6 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                </div>
-
-                                <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Filter Akun</label>
                                         <select name="filter_akun" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
@@ -245,14 +293,16 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="filter-label">Aksi</label>
-                                        <div class="btn-group w-100">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12 text-right">
+                                        <div class="btn-group">
                                             <button type="submit" formaction="{{ route('realisasi-v2.export-excel') }}" class="btn btn-success btn-sm">
-                                                <i class="fas fa-file-excel mr-1"></i> Export
+                                                <i class="fas fa-file-excel mr-1"></i> Export Excel
                                             </button>
                                             <a href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId]) }}" class="btn btn-light btn-sm border">
-                                                <i class="fas fa-sync-alt"></i> Reset
+                                                <i class="fas fa-sync-alt"></i> Reset Filter
                                             </a>
                                         </div>
                                     </div>
@@ -268,6 +318,7 @@
                                 <tr>
                                     <th>Struktur Anggaran</th>
                                     <th>Kode PLO</th>
+                                    <th>Jenis</th> {{-- Tambahan Header --}}
                                     <th>No Urut</th>
                                     <th>Tgl Kuitansi</th>
                                     <th>Penerima</th>
@@ -287,13 +338,13 @@
                                 $kodeRo = $coa?->subKomponen?->komponen?->rincianOutput?->kode_ro ?? '-';
 
                                 $badgeColor = match($item->status_berkas) {
-                                    'Selesai' => 'success',
-                                    'Ditolak/Revisi' => 'danger',
-                                    'Terverifikasi' => 'info',
-                                    'Proses Verifikasi' => 'info',
-                                    'Proses PPK' => 'info',
-                                    'Proses PPSPM' => 'info',
-                                    default => 'warning'
+                                'Selesai' => 'success',
+                                'Ditolak/Revisi' => 'danger',
+                                'Terverifikasi' => 'info',
+                                'Proses Verifikasi' => 'info',
+                                'Proses PPK' => 'info',
+                                'Proses PPSPM' => 'info',
+                                default => 'warning'
                                 };
                                 @endphp
                                 <tr>
@@ -314,6 +365,15 @@
                                         </div>
                                     </td>
                                     <td class="text-center align-middle font-weight-bold text-dark">{{ $item->kode_unik_plo }}</td>
+
+                                    {{-- Tambahan Kolom Jenis Realisasi --}}
+                                    <td class="text-center align-middle">
+                                        <span class="badge {{ $item->jenis_realisasi == 'LS' ? 'bg-purple text-white' : 'bg-orange text-white' }}"
+                                            style="{{ $item->jenis_realisasi == 'LS' ? 'background-color: #6f42c1;' : 'background-color: #fd7e14;' }}">
+                                            {{ $item->jenis_realisasi }}
+                                        </span>
+                                    </td>
+
                                     <td class="text-center align-middle">{{ str_pad($item->no_urut, 4, '0', STR_PAD_LEFT) }}</td>
                                     <td class="text-center align-middle">{{ $item->tgl_kuitansi->format('d/m/Y') }}</td>
                                     <td class="align-middle">{{ $item->penerima_penyedia }}</td>
@@ -344,7 +404,8 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="6" class="text-end align-middle py-3">
+                                    {{-- Colspan berubah dari 6 menjadi 7 karena ada tambahan kolom Jenis --}}
+                                    <th colspan="7" class="text-end align-middle py-3">
                                         <span class="text-uppercase font-weight-bold">Total Realisasi :</span>
                                     </th>
                                     <th class="text-end align-middle py-3">
@@ -368,22 +429,68 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    $(document).ready(function() {
-        $('.select2-filter').select2({
-            theme: 'bootstrap-5',
-            width: '100%'
+    $(function() {
+        // ✅ DataTables
+        $('#realisasiTable').DataTable({
+            pageLength: 25,
+            order: [
+                [3, 'asc']
+            ],
+            responsive: true,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+            }
         });
 
-        $('#realisasiTable').DataTable({
-            "pageLength": 10,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
-            },
-            "order": [[2, 'desc']]
+        // ✅ SweetAlert Confirm Delete
+        $(document).on('submit', '.form-delete', function(e) {
+            e.preventDefault();
+            const form = this;
+
+            swal({
+                title: "Yakin hapus?",
+                text: "Data komponen ini tidak bisa dikembalikan.",
+                icon: "warning",
+                buttons: {
+                    cancel: {
+                        text: "Batal",
+                        visible: true,
+                        className: "btn btn-light border"
+                    },
+                    confirm: {
+                        text: "Ya, hapus",
+                        className: "btn btn-danger"
+                    }
+                },
+                dangerMode: true
+            }).then(ok => {
+                if (ok) form.submit();
+            });
         });
+
+        // ✅ Notification Logic
+        const toast = (title, text, icon, btnClass) => {
+            swal({
+                title: title,
+                text: text,
+                icon: icon,
+                buttons: {
+                    confirm: {
+                        text: "OK",
+                        className: btnClass
+                    }
+                }
+            });
+        };
+
+        @if(session('success')) toast("Berhasil", @json(session('success')), "success", "btn btn-success");
+        @endif
+        @if(session('error')) toast("Gagal", @json(session('error')), "error", "btn btn-danger");
+        @endif
+        @if($errors->any()) toast("Gagal", @json($errors->first()), "error", "btn btn-danger");
+        @endif
     });
 </script>
 @endpush

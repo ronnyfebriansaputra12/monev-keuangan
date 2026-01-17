@@ -17,7 +17,6 @@
                     <div class="row mb-4">
                         <div class="col-6">
                             <small class="text-muted d-block">Nomor Urut PLO:</small>
-                            {{-- PERBAIKAN: Menghapus str_pad agar tampil angka biasa (misal: 2) --}}
                             <h5 class="fw-bold text-primary">{{ $realisasi->no_urut }}</h5>
                         </div>
                         <div class="col-6 text-end">
@@ -30,8 +29,26 @@
                         <tr>
                             <td width="35%" class="text-muted small fw-bold">ID Transaksi (PLO)</td>
                             <td width="5%">:</td>
-                            {{-- PERBAIKAN: Menggunakan kode_unik_plo langsung tanpa tambahan str_pad manual --}}
                             <td class="fw-bold">{{ $realisasi->kode_unik_plo }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted small fw-bold">Sumber Anggaran</td>
+                            <td>:</td>
+                            <td class="fw-bold">
+                                <span class="badge bg-dark">{{ $realisasi->sumber_anggaran == 'GUP' ? 'APBN (GUP)' : $realisasi->sumber_anggaran }}</span>
+                            </td>
+                        </tr>
+                        {{-- BARIS BARU: JENIS REALISASI --}}
+                        <tr>
+                            <td class="text-muted small fw-bold">Jenis Realisasi</td>
+                            <td>:</td>
+                            <td>
+                                @if($realisasi->jenis_realisasi)
+                                <span class="badge border border-success text-success fw-bold px-3">{{ $realisasi->jenis_realisasi }}</span>
+                                @else
+                                <span class="text-muted small italic">- Belum ditentukan -</span>
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td class="text-muted small fw-bold">Penerima / Penyedia</td>
@@ -49,8 +66,25 @@
                             <td><code class="text-dark fw-bold">{{ $realisasi->npwp ?? '-' }}</code></td>
                         </tr>
 
-                        {{-- STATUS DIGITALISASI --}}
+                        {{-- BARIS BARU: STATUS SP2D --}}
                         <tr class="border-top">
+                            <td class="text-muted small fw-bold pt-2">Status SP2D</td>
+                            <td class="pt-2">:</td>
+                            <td class="pt-2">
+                                @if($realisasi->status_sp2d)
+                                <span class="badge bg-success shadow-sm px-3 py-2">
+                                    <i class="fas fa-check-double me-1"></i> SUDAH TERBIT SP2D
+                                </span>
+                                @else
+                                <span class="badge bg-light text-muted border px-3 py-2">
+                                    <i class="fas fa-clock me-1"></i> BELUM / PROSES SP2D
+                                </span>
+                                @endif
+                            </td>
+                        </tr>
+
+                        {{-- STATUS DIGITALISASI --}}
+                        <tr>
                             <td class="text-muted small fw-bold pt-2">Status Digitalisasi</td>
                             <td class="pt-2">:</td>
                             <td class="pt-2">
@@ -66,12 +100,12 @@
                             </td>
                         </tr>
 
-                        {{-- MENAMPILKAN DATA GUP & SPBY JIKA SUDAH DIISI BENDAHARA --}}
+                        {{-- DATA GUP & SPBY --}}
                         @if($realisasi->gup || $realisasi->no_urut_arsip_spby)
-                        <tr>
-                            <td class="text-muted small fw-bold text-primary">Nomor GUP</td>
-                            <td>:</td>
-                            <td class="fw-bold text-primary">{{ $realisasi->gup ?? '-' }}</td>
+                        <tr class="border-top">
+                            <td class="text-muted small fw-bold text-primary pt-2">Nomor GUP</td>
+                            <td class="pt-2">:</td>
+                            <td class="fw-bold text-primary pt-2">{{ $realisasi->gup ?? '-' }}</td>
                         </tr>
                         <tr>
                             <td class="text-muted small fw-bold text-primary">No. Urut Arsip SPBY</td>
@@ -112,7 +146,7 @@
                                     <span>Rp {{ number_format($realisasi->pph23, 2, ',', '.') }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small">
-                                    <span>PPh Final / Lainnya</span>
+                                    <span>PPh 22 / Lainnya</span>
                                     <span>Rp {{ number_format($realisasi->pph_final, 2, ',', '.') }}</span>
                                 </div>
                                 <hr class="my-2">
@@ -133,7 +167,7 @@
         </div>
 
         <div class="col-md-4">
-            {{-- 1. PANEL VERIFIKATOR --}}
+            {{-- PANEL ACTIONS (Verifikator, Bendahara, PPK, PPSPM) - TETAP SAMA SEPERTI SEBELUMNYA --}}
             @if(Auth::user()->role == 'Verifikator' && $realisasi->status_berkas == 'Proses Verifikasi')
             <div class="card shadow mb-4 border-left-warning text-dark">
                 <div class="card-header py-3 bg-warning text-dark">
@@ -153,7 +187,7 @@
             </div>
             @endif
 
-            {{-- 2. PANEL BENDAHARA TAHAP 1 --}}
+            {{-- ... (Panel Bendahara Tahap 1, PPK, PPSPM, Bendahara Akhir Tetap Sama) ... --}}
             @if(Auth::user()->role == 'Bendahara' && $realisasi->status_berkas == 'Terverifikasi')
             <div class="card shadow mb-4 border-left-primary">
                 <div class="card-header py-3 bg-primary text-white">
@@ -170,7 +204,6 @@
             </div>
             @endif
 
-            {{-- 3. PANEL PPK --}}
             @if(Auth::user()->role == 'PPK' && $realisasi->status_berkas == 'Proses PPK')
             <div class="card shadow mb-4 border-left-info">
                 <div class="card-header py-3 bg-info text-white">
@@ -187,7 +220,6 @@
             </div>
             @endif
 
-            {{-- 4. PANEL PPSPM --}}
             @if(Auth::user()->role == 'PPSPM' && $realisasi->status_berkas == 'Proses PPSPM')
             <div class="card shadow mb-4 border-left-dark">
                 <div class="card-header py-3 bg-dark text-white">
@@ -196,15 +228,35 @@
                 <div class="card-body">
                     <form action="{{ route('realisasi-v2.verify-ppspm', $realisasi->id) }}" method="POST">
                         @csrf @method('PATCH')
-                        <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
+
+                        @if($realisasi->jenis_realisasi == 'LS')
+                        <div class="mb-3">
+                            <label class="small mb-1 fw-bold text-danger">Catatan/Alasan Revisi (Wajib jika menolak)</label>
+                            <textarea name="keterangan" class="form-control form-control-sm" rows="2" placeholder="Masukkan alasan jika berkas ditolak ke PPBJ..."></textarea>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <button type="submit" name="action" value="approve" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
+                                    <i class="fas fa-check-circle me-1"></i> SETUJUI (FINALISASI BEND.)
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" name="action" value="reject" class="btn btn-outline-danger btn-sm w-100 fw-bold shadow-sm">
+                                    <i class="fas fa-undo me-1"></i> TOLAK KE PPBJ
+                                </button>
+                            </div>
+                        </div>
+                        @else
+                        <button type="submit" name="action" value="approve" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
                             <i class="fas fa-check-circle me-1"></i> SETUJUI (FINALISASI BEND.)
                         </button>
+                        @endif
                     </form>
                 </div>
             </div>
             @endif
 
-            {{-- 5. PANEL BENDAHARA TAHAP AKHIR --}}
             @if(Auth::user()->role == 'Bendahara' && $realisasi->status_berkas == 'Menunggu Finalisasi Bendahara')
             <div class="card shadow mb-4 border-left-success">
                 <div class="card-header py-3 bg-success text-white">
@@ -225,8 +277,6 @@
             $lampiran = $realisasi->lampiran;
             if (is_string($lampiran)) { $lampiran = json_decode($lampiran, true); }
             $lampiran = is_array($lampiran) ? $lampiran : [];
-
-            // Urutkan lampiran berdasarkan nama agar mudah dicari
             $lampiran = collect($lampiran)->sortBy('nama_berkas')->values()->all();
             @endphp
 
@@ -243,17 +293,14 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3 hover-bg-light border-bottom">
                             <div class="text-truncate me-2" style="max-width: 85%;">
                                 @php
-                                // Logika ikon dinamis berdasarkan nama berkas
                                 $nama = $file['nama_berkas'] ?? 'Berkas';
                                 $icon = 'fa-file-alt';
                                 $iconColor = 'text-secondary';
-
                                 if(Str::contains($nama, ['Kuitansi', 'Kwitansi', 'Invoice'])) { $icon = 'fa-receipt'; $iconColor = 'text-success'; }
                                 elseif(Str::contains($nama, ['Surat', 'SPPD', 'Undangan'])) { $icon = 'fa-envelope-open-text'; $iconColor = 'text-primary'; }
                                 elseif(Str::contains($nama, ['SSP', 'NPWP', 'Pajak'])) { $icon = 'fa-file-invoice-dollar'; $iconColor = 'text-danger'; }
                                 elseif(Str::contains($nama, ['Pesawat', 'Transport', 'Taksi'])) { $icon = 'fa-plane-departure'; $iconColor = 'text-warning'; }
                                 @endphp
-
                                 <i class="fas {{ $icon }} {{ $iconColor }} me-2"></i>
                                 <span class="small text-dark fw-bold">{{ $nama }}</span>
                                 <br>
@@ -278,7 +325,7 @@
                 </div>
             </div>
 
-            {{-- HIERARCHY ANGGARAN --}}
+            {{-- ... (Silsilah Hierarchy & Navigasi Tetap Sama) ... --}}
             <div class="card shadow mb-4">
                 <div class="card-header py-3 bg-light">
                     <h6 class="m-0 font-weight-bold text-secondary small uppercase"><i class="fas fa-sitemap me-1"></i> Informasi Pagu</h6>
@@ -303,7 +350,6 @@
                 </div>
             </div>
 
-            {{-- NAVIGASI UTAMA --}}
             <div class="card shadow mb-4">
                 <div class="card-body p-3">
                     <div class="d-grid gap-2">
@@ -321,7 +367,7 @@
         </div>
     </div>
 
-    {{-- AUDIT TRAIL --}}
+    {{-- AUDIT TRAIL TETAP SAMA --}}
     <h6 class="fw-bold text-primary uppercase small mb-4 mt-2"><i class="fas fa-history me-1"></i> Riwayat Aktivitas & Audit Trail</h6>
     <div class="audit-trail-wrapper mb-5">
         @forelse($realisasi->logs as $log)
@@ -364,7 +410,7 @@
     </div>
 </div>
 
-{{-- MODALS TETAP SAMA --}}
+{{-- MODALS --}}
 <div class="modal fade" id="modalReject" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form action="{{ route('realisasi-v2.reject', $realisasi->id) }}" method="POST">

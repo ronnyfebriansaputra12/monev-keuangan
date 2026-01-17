@@ -43,66 +43,51 @@
 @endif
 
 {{-- Widget Statistik Anggaran --}}
-<div class="row mb-3">
-    <div class="col-sm-6 col-md-4">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-primary bubble-shadow-small">
-                            <i class="fas fa-wallet"></i>
-                        </div>
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card card-round border border-primary h-100 shadow-sm">
+            <div class="card-body p-3">
+                <div class="card-title fw-bold text-uppercase mb-3 text-primary" style="font-size: 0.75rem; letter-spacing: 1px;">
+                    <i class="fas fa-wallet me-1"></i> Monitoring Pagu & Sisa Anggaran
+                </div>
+                <div class="row text-center">
+                    <div class="col-6 border-end">
+                        <p class="card-category mb-1 text-muted">Total Pagu</p>
+                        <h4 class="card-title text-primary fw-bold mb-0">Rp {{ number_format($totalPagu, 0, ',', '.') }}</h4>
+                        <small class="text-muted small">Alokasi Awal</small>
                     </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Total Pagu</p>
-                            <h4 class="card-title text-primary">Rp {{ number_format($totalPagu ?? 0, 0, ',', '.') }}</h4>
-                        </div>
+                    <div class="col-6">
+                        <p class="card-category mb-1 text-danger">Pagu Anggaran SP2D</p>
+                        <h4 class="card-title text-danger fw-bold mb-0">Rp {{ number_format($totalSisaSebelumSP2D, 0, ',', '.') }}</h4>
+                        <small class="text-danger fw-bold small">Alokasi SP2D</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-md-4">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-secondary bubble-shadow-small">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                        </div>
-                    </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Total Realisasi</p>
-                            <h4 class="card-title text-secondary">Rp {{ number_format($totalRealisasi ?? 0, 0, ',', '.') }}</h4>
-                        </div>
-                    </div>
+
+    <div class="col-md-6">
+        <div class="card card-round border border-secondary h-100 shadow-sm">
+            <div class="card-body p-3">
+                <div class="card-title fw-bold text-uppercase mb-3 text-secondary" style="font-size: 0.75rem; letter-spacing: 1px;">
+                    <i class="fas fa-file-invoice-dollar me-1"></i> Monitoring Realisasi (Pengeluaran)
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-md-4">
-        <div class="card card-stats card-round">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-icon">
-                        <div class="icon-big text-center icon-success bubble-shadow-small">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
+                <div class="row text-center">
+                    <div class="col-6 border-end">
+                        <p class="card-category mb-1">Realisasi (SP2D)</p>
+                        <h4 class="card-title text-secondary fw-bold mb-0">Rp {{ number_format($totalRealisasi, 0, ',', '.') }}</h4>
+                        <small class="text-muted small">Sudah Selesai</small>
                     </div>
-                    <div class="col col-stats ms-3 ms-sm-0">
-                        <div class="numbers">
-                            <p class="card-category">Sisa Anggaran</p>
-                            <h4 class="card-title text-success">Rp {{ number_format($totalSisa ?? 0, 0, ',', '.') }}</h4>
-                        </div>
+                    <div class="col-6">
+                        <p class="card-category mb-1 text-warning">Sebelum SP2D</p>
+                        <h4 class="card-title text-warning fw-bold mb-0">Rp {{ number_format($totalSebelumSP2D, 0, ',', '.') }}</h4>
+                        <small class="text-warning fw-bold small">Sedang Proses</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 <div class="card mb-3">
     <div class="card-body">
         <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
@@ -150,16 +135,11 @@ $grouped = $coaItems->groupBy(fn($x) => $x->parent_id ?? 0);
 
 /**
 * Helper Label Kode Hierarchy
-* LOGIKA BARU: Jika Lv 0 maka tampilkan COA
 */
 $getLabelKode = function($c) {
-// Jika Level 0, tampilkan COA sesuai permintaan
 if ($c->level == 0) return 'COA';
-
-// Jika level lainnya, tetap gunakan logika hierarchy sebelumnya
 if ($c->level == 1) return 'SUB JUDUL';
 if ($c->level == 2) return 'COA';
-
 return $c->kode ?? '-';
 };
 
@@ -206,14 +186,10 @@ $kodeTampil = $getLabelKode($c);
 $rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.$currentLevel.'">';
     $rows .= ' <td class="text-center"></td>';
 
-    // KOLOM AKUN: Menampilkan "COA" untuk item detail/child
+    // --- BAGIAN YANG DIPERBAIKI: Selalu menampilkan data akun ---
     $rows .= ' <td>';
-        if($c->level > 0 || $c->catatan_desk == 'COA') {
-        $rows .= '<div class="fw-bold text-info">COA</div>';
-        } else {
         $rows .= '<div class="fw-bold">'.e($c->mak?->akun?->kode_akun ?? '-').'</div>';
         $rows .= '<div class="text-muted small">'.e($c->mak?->akun?->nama_akun ?? '-').'</div>';
-        }
         $rows .= ' </td>';
 
     $rows .= ' <td>
@@ -227,18 +203,21 @@ $rows .= '<tr class="'.$levelRowClass($c->level).'" data-level="'.$currentLevel.
         </div>
     </td>';
 
-    // KOLOM KODE: Sekarang menampilkan "COA" jika baris tersebut adalah Lv 0
     $rows .= ' <td class="text-center fw-bold text-primary">'.e($kodeTampil).'</td>';
 
     $rows .= ' <td class="text-end">'.number_format((int)($c->volume ?? 0), 0, ',', '.').'</td>';
     $rows .= ' <td class="text-center">'.e($c->satuan ?? '').'</td>';
     $rows .= ' <td class="text-end">'.number_format((float)($c->harga_satuan ?? 0), 0, ',', '.').'</td>';
 
-    $rows .= ' <td class="text-end fw-bold">
-        <a class="text-decoration-none" href="'.route('realisasi-v2.create', ['coa_item_id' => $c->id]).'">
+    $rows .= ' <td class="text-end fw-bold">';
+        if ($currentLevel === 1) {
+        $rows .= number_format($pagu, 0, ',', '.');
+        } else {
+        $rows .= ' <a class="text-decoration-none" href="'.route('realisasi-v2.create', ['coa_item_id' => $c->id]).'">
             '.number_format($pagu, 0, ',', '.').'
-        </a>
-    </td>';
+        </a>';
+        }
+        $rows .= ' </td>';
 
     $rows .= ' <td class="text-end text-muted italic">
         '.number_format($terpakai, 0, ',', '.').'

@@ -12,18 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('realisasis', function (Blueprint $table) {
-            // Menambahkan kolom created_by setelah kolom total
-            $table->foreignId('created_by')->nullable()->after('total')->constrained('users')->onDelete('cascade');
+            // Menambahkan enum untuk jenis realisasi
+            $table->enum('jenis_realisasi', ['GUP', 'LS'])->nullable()->after('sumber_anggaran');
+
+            // Menambahkan boolean/tinyint untuk checkbox status sp2d
+            $table->boolean('status_sp2d')->default(false)->after('status_berkas_line');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('realisasis', function (Blueprint $table) {
-            //
+            $table->dropColumn(['jenis_realisasi', 'status_sp2d']);
         });
     }
 };

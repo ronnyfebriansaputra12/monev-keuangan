@@ -47,7 +47,9 @@ class Realisasi extends Model
         'tgl_kuitansi',
         'status_berkas_line',
         'nomor_kuitansi',
-        'lampiran'
+        'lampiran',
+        'status_sp2d',
+        'jenis_realisasi'
     ];
 
     protected $casts = [
