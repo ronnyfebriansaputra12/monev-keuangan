@@ -186,54 +186,50 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-{{-- Pastikan library SweetAlert 1 terpasang di layout atau tambahkan di sini --}}
-<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
 <script>
-    $(document).ready(function() {
-        // 1. Inisialisasi Select2
-        $('.select2-filter').select2({
-            theme: 'bootstrap-5',
-            width: '100%'
-        });
-
-        // 2. Inisialisasi DataTables
-        $('#realisasiTable').DataTable({
-            "pageLength": 10,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
-            },
-            "order": [[2, 'desc']]
-        });
-
-        // 3. Fungsi Toast SweetAlert (Sesuai style Anda sebelumnya)
-        const toast = (title, text, icon, btnClass) => {
-            swal({
-                title: title,
-                text: text,
-                icon: icon,
-                buttons: { 
-                    confirm: { 
-                        text: "OK", 
-                        className: btnClass 
-                    } 
-                }
-            });
-        };
-
-        // 4. Trigger Alert dari Session Laravel
-        @if(session('success')) 
-            toast("Berhasil", {!! json_encode(session('success')) !!}, "success", "btn btn-success"); 
-        @endif
-
-        @if(session('error')) 
-            toast("Gagal", {!! json_encode(session('error')) !!}, "error", "btn btn-danger"); 
-        @endif
-
-        @if($errors->any()) 
-            toast("Validasi Gagal", {!! json_encode($errors->first()) !!}, "error", "btn btn-danger"); 
-        @endif
+$(function () {
+    // ✅ DataTables
+    $('#dtKomponen').DataTable({
+        pageLength: 25,
+        order: [[3, 'asc']],
+        responsive: true,
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+        }
     });
+
+    // ✅ SweetAlert Confirm Delete
+    $(document).on('submit', '.form-delete', function (e) {
+        e.preventDefault();
+        const form = this;
+
+        swal({
+            title: "Yakin hapus?",
+            text: "Data komponen ini tidak bisa dikembalikan.",
+            icon: "warning",
+            buttons: {
+                cancel: { text: "Batal", visible: true, className: "btn btn-light border" },
+                confirm: { text: "Ya, hapus", className: "btn btn-danger" }
+            },
+            dangerMode: true
+        }).then(ok => { if (ok) form.submit(); });
+    });
+
+    // ✅ Notification Logic
+    const toast = (title, text, icon, btnClass) => {
+        swal({
+            title: title,
+            text: text,
+            icon: icon,
+            buttons: { confirm: { text: "OK", className: btnClass } }
+        });
+    };
+
+    @if(session('success')) toast("Berhasil", @json(session('success')), "success", "btn btn-success"); @endif
+    @if(session('error')) toast("Gagal", @json(session('error')), "error", "btn btn-danger"); @endif
+    @if($errors->any()) toast("Gagal", @json($errors->first()), "error", "btn btn-danger"); @endif
+});
 </script>
 @endpush
 @endsection
