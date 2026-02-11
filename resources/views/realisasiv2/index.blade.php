@@ -206,19 +206,18 @@
                             <li class="nav-item">
                                 <a class="nav-link {{ empty($currentStatus) ? 'active' : '' }}"
                                     href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId, 'search' => request('search')]) }}">
-                                    Semua Berkas <span class="badge-count count-default">{{ $totalCountAll }}</span>
+                                    Semua Berkas <span class="badge-count count-default">{{ (int)$totalCountAll }}</span>
                                 </a>
                             </li>
                             @foreach($statusConfig as $statusName => $cfg)
                             @php
-                            // Logika Kedip Soft: Hanya jika status Ditolak dan jumlah > 0
                             $shouldBlink = ($statusName === 'Ditolak/Revisi' && isset($counts[$statusName]) && $counts[$statusName] > 0);
                             @endphp
                             <li class="nav-item">
                                 <a class="nav-link {{ $currentStatus == $statusName ? 'active' : '' }} {{ $shouldBlink ? 'blink-danger' : '' }}"
                                     href="{{ route('realisasi-v2.index', ['coa_item_id' => $coaItemId, 'status_berkas' => $statusName, 'search' => request('search')]) }}">
-                                    {{ $statusName }}
-                                    <span class="badge-count {{ $cfg['color'] }}">{{ $counts[$statusName] ?? 0 }}</span>
+                                    {{ e($statusName) }}
+                                    <span class="badge-count {{ $cfg['color'] }}">{{ (int)($counts[$statusName] ?? 0) }}</span>
                                 </a>
                             </li>
                             @endforeach
@@ -227,8 +226,8 @@
                         {{-- FILTER BERJENJANG --}}
                         <div class="pt-4 border-top">
                             <form action="{{ route('realisasi-v2.index') }}" method="GET">
-                                <input type="hidden" name="coa_item_id" value="{{ $coaItemId }}">
-                                <input type="hidden" name="status_berkas" value="{{ $currentStatus }}">
+                                <input type="hidden" name="coa_item_id" value="{{ e($coaItemId) }}">
+                                <input type="hidden" name="status_berkas" value="{{ e($currentStatus) }}">
 
                                 <div class="row">
                                     {{-- FILTER KHUSUS PPSPM & BENDAHARA --}}
@@ -240,7 +239,7 @@
                                         <select name="jenis_realisasi" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
                                             <option value="">-- Semua Jenis --</option>
                                             @foreach($listJenisRealisasi as $jenis)
-                                            <option value="{{ $jenis }}" {{ request('jenis_realisasi') == $jenis ? 'selected' : '' }}>{{ $jenis }}</option>
+                                            <option value="{{ e($jenis) }}" {{ request('jenis_realisasi') == $jenis ? 'selected' : '' }}>{{ e($jenis) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -248,18 +247,18 @@
 
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Tanggal Mulai</label>
-                                        <input type="date" name="tgl_awal" class="form-control form-control-sm" value="{{ request('tgl_awal') }}" onchange="this.form.submit()">
+                                        <input type="date" name="tgl_awal" class="form-control form-control-sm" value="{{ e(request('tgl_awal')) }}" onchange="this.form.submit()">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Tanggal Selesai</label>
-                                        <input type="date" name="tgl_akhir" class="form-control form-control-sm" value="{{ request('tgl_akhir') }}" onchange="this.form.submit()">
+                                        <input type="date" name="tgl_akhir" class="form-control form-control-sm" value="{{ e(request('tgl_akhir')) }}" onchange="this.form.submit()">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label class="filter-label">Filter GUP</label>
                                         <select name="filter_gup" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
                                             <option value="">-- Semua GUP --</option>
                                             @foreach($listGup as $gup)
-                                            <option value="{{ $gup }}" {{ request('filter_gup') == $gup ? 'selected' : '' }}>{{ $gup }}</option>
+                                            <option value="{{ e($gup) }}" {{ request('filter_gup') == $gup ? 'selected' : '' }}>{{ e($gup) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -271,7 +270,7 @@
                                         <select name="filter_ro" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
                                             <option value="">-- Semua RO --</option>
                                             @foreach($listRo as $kode_ro)
-                                            <option value="{{ $kode_ro }}" {{ request('filter_ro') == $kode_ro ? 'selected' : '' }}>{{ $kode_ro }}</option>
+                                            <option value="{{ e($kode_ro) }}" {{ request('filter_ro') == $kode_ro ? 'selected' : '' }}>{{ e($kode_ro) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -280,14 +279,14 @@
                                         <select name="filter_akun" class="form-control form-control-sm select2-filter" onchange="this.form.submit()">
                                             <option value="">-- Semua Akun --</option>
                                             @foreach($listAkun as $row)
-                                            <option value="{{ $row->kode_akun }}" {{ request('filter_akun') == $row->kode_akun ? 'selected' : '' }}>{{ $row->kode_akun }} - {{ $row->nama_akun }}</option>
+                                            <option value="{{ e($row->kode_akun) }}" {{ request('filter_akun') == $row->kode_akun ? 'selected' : '' }}>{{ e($row->kode_akun) }} - {{ e($row->nama_akun) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="filter-label">Pencarian Cepat</label>
                                         <div class="input-group">
-                                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Kode PLO, Penerima, atau Uraian..." value="{{ request('search') }}">
+                                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Kode PLO, Penerima, atau Uraian..." value="{{ e(request('search')) }}">
                                             <div class="input-group-append">
                                                 <button class="btn btn-primary btn-sm px-3" type="submit"><i class="fas fa-search"></i> Cari</button>
                                             </div>
@@ -318,7 +317,7 @@
                                 <tr>
                                     <th>Struktur Anggaran</th>
                                     <th>Kode PLO</th>
-                                    <th>Jenis</th> {{-- Tambahan Header --}}
+                                    <th>Jenis</th>
                                     <th>No Urut</th>
                                     <th>Tgl Kuitansi</th>
                                     <th>Penerima</th>
@@ -340,10 +339,7 @@
                                 $badgeColor = match($item->status_berkas) {
                                 'Selesai' => 'success',
                                 'Ditolak/Revisi' => 'danger',
-                                'Terverifikasi' => 'info',
-                                'Proses Verifikasi' => 'info',
-                                'Proses PPK' => 'info',
-                                'Proses PPSPM' => 'info',
+                                'Terverifikasi', 'Proses Verifikasi', 'Proses PPK', 'Proses PPSPM' => 'info',
                                 default => 'warning'
                                 };
                                 @endphp
@@ -352,41 +348,40 @@
                                         <div class="small">
                                             <div class="mb-1">
                                                 <span class="text-primary font-weight-bold" style="width: 45px; display: inline-block;">MAK:</span>
-                                                <span class="text-dark">{{ $mak?->nama_mak ?? '-' }}</span>
+                                                <span class="text-dark">{{ e($mak?->nama_mak ?? '-') }}</span>
                                             </div>
                                             <div class="mb-1">
                                                 <span class="text-info font-weight-bold" style="width: 45px; display: inline-block;">RO:</span>
-                                                <span class="badge badge-info-soft text-info border-info border">{{ $kodeRo }}</span>
+                                                <span class="badge badge-info-soft text-info border-info border">{{ e($kodeRo) }}</span>
                                             </div>
                                             <div>
                                                 <span class="text-success font-weight-bold" style="width: 45px; display: inline-block;">AKUN:</span>
-                                                <span class="badge badge-light border text-dark">{{ $kodeAkun }}</span>
+                                                <span class="badge badge-light border text-dark">{{ e($kodeAkun) }}</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center align-middle font-weight-bold text-dark">{{ $item->kode_unik_plo }}</td>
+                                    <td class="text-center align-middle font-weight-bold text-dark">{{ e($item->kode_unik_plo) }}</td>
 
-                                    {{-- Tambahan Kolom Jenis Realisasi --}}
                                     <td class="text-center align-middle">
-                                        <span class="badge {{ $item->jenis_realisasi == 'LS' ? 'bg-purple text-white' : 'bg-orange text-white' }}"
-                                            style="{{ $item->jenis_realisasi == 'LS' ? 'background-color: #6f42c1;' : 'background-color: #fd7e14;' }}">
-                                            {{ $item->jenis_realisasi }}
+                                        <span class="badge text-white"
+                                            style="background-color: {{ $item->jenis_realisasi == 'LS' ? '#6f42c1' : '#fd7e14' }};">
+                                            {{ e($item->jenis_realisasi) }}
                                         </span>
                                     </td>
 
                                     <td class="text-center align-middle">{{ str_pad($item->no_urut, 4, '0', STR_PAD_LEFT) }}</td>
-                                    <td class="text-center align-middle">{{ $item->tgl_kuitansi->format('d/m/Y') }}</td>
-                                    <td class="align-middle">{{ $item->penerima_penyedia }}</td>
+                                    <td class="text-center align-middle">{{ optional($item->tgl_kuitansi)->format('d/m/Y') }}</td>
+                                    <td class="align-middle">{{ e($item->penerima_penyedia) }}</td>
                                     <td class="align-middle text-muted">{{ Str::limit($item->uraian, 35) }}</td>
                                     <td class="text-end align-middle font-weight-bold">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
                                     <td class="text-center align-middle">
                                         <span class="badge badge-{{ $badgeColor }} px-3 py-2 rounded-pill shadow-xs">
-                                            {{ $item->status_berkas }}
+                                            {{ e($item->status_berkas) }}
                                         </span>
                                     </td>
                                     <td class="text-center align-middle">
                                         @if($item->gup)
-                                        <span class="badge badge-secondary px-2 py-1">{{ $item->gup }}</span>
+                                        <span class="badge badge-secondary px-2 py-1">{{ e($item->gup) }}</span>
                                         @else
                                         <span class="text-muted">-</span>
                                         @endif
@@ -404,7 +399,6 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    {{-- Colspan berubah dari 6 menjadi 7 karena ada tambahan kolom Jenis --}}
                                     <th colspan="7" class="text-end align-middle py-3">
                                         <span class="text-uppercase font-weight-bold">Total Realisasi :</span>
                                     </th>
@@ -429,6 +423,7 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
 <script>
     $(function() {
@@ -485,11 +480,20 @@
             });
         };
 
-        @if(session('success')) toast("Berhasil", @json(session('success')), "success", "btn btn-success");
+        @if(session('success'))
+        toast("Berhasil", {
+            !!json_encode(session('success')) !!
+        }, "success", "btn btn-success");
         @endif
-        @if(session('error')) toast("Gagal", @json(session('error')), "error", "btn btn-danger");
+        @if(session('error'))
+        toast("Gagal", {
+            !!json_encode(session('error')) !!
+        }, "error", "btn btn-danger");
         @endif
-        @if($errors->any()) toast("Gagal", @json($errors->first()), "error", "btn btn-danger");
+        @if($errors->any())
+        toast("Gagal", {
+            !!json_encode($errors->first()) !!
+        }, "error", "btn btn-danger");
         @endif
     });
 </script>

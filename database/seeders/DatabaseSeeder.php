@@ -96,7 +96,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => $user['email']],
                 [
                     'name'     => $user['name'],
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make('Password12!'),
                     'role'     => $user['role'],
                     'plo_code' => null,
                 ]

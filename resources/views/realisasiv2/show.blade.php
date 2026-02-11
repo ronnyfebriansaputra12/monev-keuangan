@@ -21,7 +21,7 @@
                         </div>
                         <div class="col-6 text-end">
                             <small class="text-muted d-block">Tanggal Kuitansi:</small>
-                            <h5 class="fw-bold">{{ $realisasi->tgl_kuitansi->format('d F Y') }}</h5>
+                            <h5 class="fw-bold">{{ $realisasi->tgl_kuitansi ? $realisasi->tgl_kuitansi->format('d F Y') : '-' }}</h5>
                         </div>
                     </div>
 
@@ -35,10 +35,9 @@
                             <td class="text-muted small fw-bold">Sumber Anggaran</td>
                             <td>:</td>
                             <td class="fw-bold">
-                                <span class="badge bg-dark">{{ $realisasi->sumber_anggaran == 'GUP' ? 'APBN (GUP)' : $realisasi->sumber_anggaran }}</span>
+                                <span class="badge bg-dark">{{ $realisasi->sumber_anggaran == 'GUP' ? 'DIPA' : $realisasi->sumber_anggaran }}</span>
                             </td>
                         </tr>
-                        {{-- BARIS BARU: JENIS REALISASI --}}
                         <tr>
                             <td class="text-muted small fw-bold">Jenis Realisasi</td>
                             <td>:</td>
@@ -50,6 +49,48 @@
                                 @endif
                             </td>
                         </tr>
+
+                        {{-- DETAIL SPP --}}
+                        @if($realisasi->no_spp || $realisasi->tgl_spp)
+                        <tr class="bg-light">
+                            <td class="text-success small fw-bold">Nomor SPP</td>
+                            <td class="text-success">:</td>
+                            <td class="fw-bold text-success">{{ $realisasi->no_spp ?? '-' }}</td>
+                        </tr>
+                        <tr class="bg-light">
+                            <td class="text-success small fw-bold">Tanggal SPP</td>
+                            <td class="text-success">:</td>
+                            <td class="fw-bold text-success">{{ $realisasi->tgl_spp ? $realisasi->tgl_spp->format('d/m/Y') : '-' }}</td>
+                        </tr>
+                        @endif
+
+                        {{-- NEW: DETAIL SPM & FAKTUR PAJAK (Inputan PPSPM) --}}
+                        @if($realisasi->no_spm || $realisasi->tgl_spm)
+                        <tr style="background-color: #f8f9fc;">
+                            <td class="text-primary small fw-bold">Nomor SPM</td>
+                            <td class="text-primary">:</td>
+                            <td class="fw-bold text-primary">{{ $realisasi->no_spm ?? '-' }}</td>
+                        </tr>
+                        <tr style="background-color: #f8f9fc;">
+                            <td class="text-primary small fw-bold">Tanggal SPM</td>
+                            <td class="text-primary">:</td>
+                            <td class="fw-bold text-primary">{{ $realisasi->tgl_spm ? $realisasi->tgl_spm->format('d/m/Y') : '-' }}</td>
+                        </tr>
+                        @endif
+
+                        @if($realisasi->no_faktur_pajak || $realisasi->tgl_faktur_pajak)
+                        <tr style="background-color: #fff9f0;">
+                            <td class="text-warning small fw-bold">Nomor Faktur Pajak</td>
+                            <td class="text-warning">:</td>
+                            <td class="fw-bold text-dark">{{ $realisasi->no_faktur_pajak ?? '-' }}</td>
+                        </tr>
+                        <tr style="background-color: #fff9f0;">
+                            <td class="text-warning small fw-bold">Tanggal Faktur Pajak</td>
+                            <td class="text-warning">:</td>
+                            <td class="fw-bold text-dark">{{ $realisasi->tgl_faktur_pajak ? $realisasi->tgl_faktur_pajak->format('d/m/Y') : '-' }}</td>
+                        </tr>
+                        @endif
+
                         <tr>
                             <td class="text-muted small fw-bold">Penerima / Penyedia</td>
                             <td>:</td>
@@ -167,7 +208,7 @@
         </div>
 
         <div class="col-md-4">
-            {{-- PANEL ACTIONS (Verifikator, Bendahara, PPK, PPSPM) - TETAP SAMA SEPERTI SEBELUMNYA --}}
+            {{-- PANEL ACTIONS --}}
             @if(Auth::user()->role == 'Verifikator' && $realisasi->status_berkas == 'Proses Verifikasi')
             <div class="card shadow mb-4 border-left-warning text-dark">
                 <div class="card-header py-3 bg-warning text-dark">
@@ -187,7 +228,6 @@
             </div>
             @endif
 
-            {{-- ... (Panel Bendahara Tahap 1, PPK, PPSPM, Bendahara Akhir Tetap Sama) ... --}}
             @if(Auth::user()->role == 'Bendahara' && $realisasi->status_berkas == 'Terverifikasi')
             <div class="card shadow mb-4 border-left-primary">
                 <div class="card-header py-3 bg-primary text-white">
@@ -220,16 +260,21 @@
             </div>
             @endif
 
-            @if(Auth::user()->role == 'PPSPM' && $realisasi->status_berkas == 'Proses PPSPM')
+            {{-- PANEL PPSPM (Tampil saat Proses PPSPM ATAU Menunggu SP2D Terbit) --}}
+            @if(Auth::user()->role == 'PPSPM' && ($realisasi->status_berkas == 'Proses PPSPM' || $realisasi->status_berkas == 'Menunggu SP2D Terbit'))
             <div class="card shadow mb-4 border-left-dark">
-                <div class="card-header py-3 bg-dark text-white">
+                <div class="card-header py-3 bg-dark text-white d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold small uppercase"><i class="fas fa-stamp me-1"></i> Panel Verifikasi PPSPM</h6>
+                    @if($realisasi->status_berkas == 'Menunggu SP2D Terbit')
+                    <span class="badge bg-light text-dark shadow-sm">Tahap SP2D</span>
+                    @endif
                 </div>
                 <div class="card-body">
                     <form action="{{ route('realisasi-v2.verify-ppspm', $realisasi->id) }}" method="POST">
                         @csrf @method('PATCH')
 
                         @if($realisasi->jenis_realisasi == 'LS')
+                        {{-- Input Catatan Revisi --}}
                         <div class="mb-3">
                             <label class="small mb-1 fw-bold text-danger">Catatan/Alasan Revisi (Wajib jika menolak)</label>
                             <textarea name="keterangan" class="form-control form-control-sm" rows="2" placeholder="Masukkan alasan jika berkas ditolak ke PPBJ..."></textarea>
@@ -237,9 +282,16 @@
 
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <button type="submit" name="action" value="approve" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
-                                    <i class="fas fa-check-circle me-1"></i> SETUJUI (FINALISASI BEND.)
+                                {{-- Jika status sudah Menunggu SP2D, tombol berubah menjadi Selesaikan --}}
+                                @if($realisasi->status_berkas == 'Menunggu SP2D Terbit')
+                                <button type="submit" name="action" value="finalize_ls" class="btn btn-success btn-sm w-100 fw-bold shadow-sm">
+                                    <i class="fas fa-check-double me-1"></i> SELESAIKAN (LS)
                                 </button>
+                                @else
+                                <button type="submit" name="action" value="approve" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
+                                    <i class="fas fa-arrow-right me-1"></i> LANJUT SP2D
+                                </button>
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <button type="submit" name="action" value="reject" class="btn btn-outline-danger btn-sm w-100 fw-bold shadow-sm">
@@ -248,15 +300,23 @@
                             </div>
                         </div>
                         @else
+                        {{-- Logika untuk Non-LS (GUP) --}}
                         <button type="submit" name="action" value="approve" class="btn btn-dark btn-sm w-100 fw-bold shadow-sm">
                             <i class="fas fa-check-circle me-1"></i> SETUJUI (FINALISASI BEND.)
                         </button>
                         @endif
                     </form>
+
+                    {{-- Tombol Edit SPM khusus untuk PPSPM jika ingin ubah nomor SPM tanpa ganti status --}}
+                    @if($realisasi->status_berkas == 'Menunggu SP2D Terbit')
+                    <hr>
+                    <a href="{{ route('realisasi-v2.edit', $realisasi->id) }}" class="btn btn-outline-dark btn-sm w-100 fw-bold">
+                        <i class="fas fa-edit me-1"></i> UPDATE NO. SPM / FAKTUR
+                    </a>
+                    @endif
                 </div>
             </div>
             @endif
-
             @if(Auth::user()->role == 'Bendahara' && $realisasi->status_berkas == 'Menunggu Finalisasi Bendahara')
             <div class="card shadow mb-4 border-left-success">
                 <div class="card-header py-3 bg-success text-white">
@@ -325,7 +385,6 @@
                 </div>
             </div>
 
-            {{-- ... (Silsilah Hierarchy & Navigasi Tetap Sama) ... --}}
             <div class="card shadow mb-4">
                 <div class="card-header py-3 bg-light">
                     <h6 class="m-0 font-weight-bold text-secondary small uppercase"><i class="fas fa-sitemap me-1"></i> Informasi Pagu</h6>
@@ -367,7 +426,7 @@
         </div>
     </div>
 
-    {{-- AUDIT TRAIL TETAP SAMA --}}
+    {{-- AUDIT TRAIL --}}
     <h6 class="fw-bold text-primary uppercase small mb-4 mt-2"><i class="fas fa-history me-1"></i> Riwayat Aktivitas & Audit Trail</h6>
     <div class="audit-trail-wrapper mb-5">
         @forelse($realisasi->logs as $log)

@@ -11,6 +11,8 @@
                         Verifikasi & Input GUP/SPBY (Role: Bendahara)
                         @elseif(Auth::user()->role == 'PPBJ')
                         Edit / Revisi Realisasi (Role: PPBJ)
+                        @elseif(Auth::user()->role == 'PPSPM')
+                        Verifikasi & Input SPM (Role: PPSPM)
                         @else
                         Edit / Revisi Realisasi (Role: PLO)
                         @endif
@@ -36,6 +38,7 @@
                         @method('PUT')
 
                         @php
+
                         $selectedCoa = $realisasiV2->coaItem;
                         $sub = $selectedCoa?->subKomponen;
                         $komp = $sub?->komponen;
@@ -280,6 +283,31 @@
 
                                 <hr>
 
+                                {{-- INPUT KHUSUS PPSPM UNTUK JENIS LS --}}
+                                @if(Auth::user()->role == 'PPSPM' && $realisasiV2->jenis_realisasi == 'LS')
+                                <div class="mb-4 border p-3 rounded bg-white shadow-sm border-left-dark">
+                                    <h6 class="text-dark fw-bold border-bottom pb-2 mb-3"><i class="fas fa-file-invoice-dollar me-1"></i> Data SPM & Faktur (PPSPM)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label fw-bold small">Nomor SPM</label>
+                                            <input type="text" name="no_spm" class="form-control border-dark form-control-sm" value="{{ old('no_spm', $realisasiV2->no_spm) }}" placeholder="Ketik No SPM...">
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <label class="form-label fw-bold small">Tanggal SPM</label>
+                                            <input type="date" name="tgl_spm" class="form-control border-dark form-control-sm" value="{{ $realisasiV2->tgl_spm?->format('Y-m-d') }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small">No. Faktur Pajak</label>
+                                            <input type="text" name="no_faktur_pajak" class="form-control border-dark form-control-sm" value="{{ old('no_faktur_pajak', $realisasiV2->no_faktur_pajak) }}" placeholder="Ketik No Faktur...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small">Tgl. Faktur Pajak</label>
+                                            <input type="date" name="tgl_faktur_pajak" class="form-control border-dark form-control-sm" value="{{ $realisasiV2->tgl_faktur_pajak?->format('Y-m-d') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
                                 @if(Auth::user()->role == 'Bendahara')
                                 <div class="mb-4 border p-3 rounded bg-white shadow-sm border-left-primary">
                                     <h6 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fas fa-file-invoice me-1"></i> Kelengkapan Bendahara</h6>
@@ -293,6 +321,7 @@
                                     </div>
                                 </div>
                                 @endif
+
                                 <div class="mb-3">
                                     <label class="form-label small">KIRIM STATUS KE:</label>
 
@@ -320,6 +349,18 @@
                                         <option value="Proses PPSPM" {{ $realisasiV2->status_berkas == 'Proses PPSPM' ? 'selected' : '' }}>Proses PPSPM (Ajukan)</option>
                                         <option value="Draft" {{ $realisasiV2->status_berkas == 'Draft' ? 'selected' : '' }}>Draft (Simpan Sementara)</option>
 
+                                        @elseif(Auth::user()->role == 'PPSPM')
+                                        <option value="Proses PPSPM" {{ $realisasiV2->status_berkas == 'Proses PPSPM' ? 'selected' : '' }}>Proses PPSPM (Tetap)</option>
+
+                                        {{-- Opsi Khusus PPSPM untuk Jenis LS --}}
+                                            @if($realisasiV2->jenis_realisasi == "LS")
+                                            <option value="Menunggu SP2D Terbit" {{ $realisasiV2->status_berkas == 'Menunggu SP2D Terbit' ? 'selected' : '' }}>Setujui (Menunggu SP2D Terbit)</option>
+                                            @else
+                                            <option value="Menunggu Finalisasi Bendahara" {{ $realisasiV2->status_berkas == 'Menunggu Finalisasi Bendahara' ? 'selected' : '' }}>Setujui (Finalisasi Bendahara)</option>
+                                            @endif
+
+                                        <option value="Ditolak/Revisi">Kembalikan/Tolak (Revisi)</option>
+
                                         @else
                                         {{-- Default PLO / Superadmin --}}
                                         <option value="Proses Verifikasi" {{ $realisasiV2->status_berkas == 'Proses Verifikasi' ? 'selected' : '' }}>Verifikator (Ajukan)</option>
@@ -333,12 +374,12 @@
                                 </div>
 
                                 {{-- NEW: Checkbox Status SP2D (Kondisional) --}}
-                                <div id="container_status_sp2d" class="form-check form-switch mb-3 p-3 bg-white border rounded shadow-sm" style="display: none;">
+                                <!-- <div id="container_status_sp2d" class="form-check form-switch mb-3 p-3 bg-white border rounded shadow-sm" style="display: none;">
                                     <input class="form-check-input ms-0 me-3" type="checkbox" name="status_sp2d" value="1" id="status_sp2d_check" {{ $realisasiV2->status_sp2d ? 'checked' : '' }}>
                                     <label class="form-check-label fw-bold text-primary small" for="status_sp2d_check">
                                         SUDAH TERBIT SP2D
                                     </label>
-                                </div>
+                                </div> -->
 
                                 <div class="mb-3">
                                     <label class="form-label small">TGL PENYERAHAN BERKAS</label>

@@ -53,14 +53,15 @@
                 <div class="row text-center">
                     <div class="col-6 border-end">
                         <p class="card-category mb-1 text-muted">Total Pagu</p>
-                        <h4 class="card-title text-primary fw-bold mb-0">Rp {{ number_format($totalPagu, 0, ',', '.') }}</h4>
-                        <small class="text-muted small">Alokasi Awal</small>
+                        <h4 class="card-title text-primary fw-bold mb-0">Rp {{ number_format($totalSisa, 0, ',', '.') }}</h4>
+                        <!-- <small class="text-muted small">Alokasi Awal</small> -->
                     </div>
-                    <div class="col-6">
-                        <p class="card-category mb-1 text-danger">Pagu Anggaran SP2D</p>
-                        <h4 class="card-title text-danger fw-bold mb-0">Rp {{ number_format($totalSisaSebelumSP2D, 0, ',', '.') }}</h4>
-                        <small class="text-danger fw-bold small">Alokasi SP2D</small>
+                    <div class="col-6 border-end">
+                        <p class="card-category mb-1">Realisasi (SP2D)</p>
+                        <h4 class="card-title text-secondary fw-bold mb-0">Rp {{ number_format($totalRealisasi, 0, ',', '.') }}</h4>
+                        <!-- <small class="text-muted small">Sudah Selesai</small> -->
                     </div>
+
                 </div>
             </div>
         </div>
@@ -73,15 +74,15 @@
                     <i class="fas fa-file-invoice-dollar me-1"></i> Monitoring Realisasi (Pengeluaran)
                 </div>
                 <div class="row text-center">
-                    <div class="col-6 border-end">
-                        <p class="card-category mb-1">Realisasi (SP2D)</p>
-                        <h4 class="card-title text-secondary fw-bold mb-0">Rp {{ number_format($totalRealisasi, 0, ',', '.') }}</h4>
-                        <small class="text-muted small">Sudah Selesai</small>
+                    <div class="col-6">
+                        <p class="card-category mb-1 text-danger">Pagu Akrual</p>
+                        <h4 class="card-title text-danger fw-bold mb-0">Rp {{ number_format($totalSisaSebelumSP2D, 0, ',', '.') }}</h4>
+                        <!-- <small class="text-danger fw-bold small">Alokasi SP2D</small> -->
                     </div>
                     <div class="col-6">
-                        <p class="card-category mb-1 text-warning">Sebelum SP2D</p>
+                        <p class="card-category mb-1 text-warning">Realisasi Akrual</p>
                         <h4 class="card-title text-warning fw-bold mb-0">Rp {{ number_format($totalSebelumSP2D, 0, ',', '.') }}</h4>
-                        <small class="text-warning fw-bold small">Sedang Proses</small>
+                        <!-- <small class="text-warning fw-bold small">Sedang Proses</small> -->
                     </div>
                 </div>
             </div>

@@ -49,7 +49,15 @@ class Realisasi extends Model
         'nomor_kuitansi',
         'lampiran',
         'status_sp2d',
-        'jenis_realisasi'
+        'jenis_realisasi',
+        'no_spm',
+        'no_sp2d',
+        'tgl_sp2d',
+        'no_faktur_pajak',
+        'tgl_spm',
+        'tgl_faktur_pajak',
+        'no_spp',
+        'tgl_spp'
     ];
 
     protected $casts = [
@@ -64,6 +72,10 @@ class Realisasi extends Model
         'pph_final' => 'decimal:2',
         'finalized_at' => 'datetime',
         'lampiran' => 'array', // Krusial untuk menyimpan list berkas
+        'tgl_kuitansi' => 'date',
+        'tgl_spp' => 'date',      // Tambahkan ini
+        'tgl_spm' => 'date',      // Tambahkan ini juga jika ada
+        'tgl_faktur_pajak' => 'date',
     ];
 
     // --- Relasi ---

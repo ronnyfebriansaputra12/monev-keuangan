@@ -180,7 +180,7 @@ class RealisasiControllerV2 extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi Input
+        // 1. Validasi Input (Hardened File Validation)
         $validated = $request->validate([
             'coa_item_id'               => 'required|exists:coa_items,id',
             'satker_id'                 => 'required|exists:satkers,id',
@@ -203,9 +203,14 @@ class RealisasiControllerV2 extends Controller
             'bidang'                    => 'nullable|string',
             'tanggal_penyerahan_berkas' => 'nullable|date',
             'status_berkas'             => 'nullable|string',
-            'dokumen.*'                 => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
-            // Validasi tambahan untuk berkas kustom
-            'custom_dokumen.*'          => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+
+            // Tambahan Kolom Baru untuk PPBJ & LS
+            'no_spp'                    => 'nullable|string',
+            'tgl_spp'                   => 'nullable|date',
+
+            // Gunakan mimetypes untuk cek isi asli file (bukan cuma ekstensi)
+            'dokumen.*'                 => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
+            'custom_dokumen.*'          => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
             'custom_nama_berkas.*'      => 'nullable|string',
         ]);
 
@@ -221,17 +226,19 @@ class RealisasiControllerV2 extends Controller
 
         $nextNoUrut = $lastRecord ? ($lastRecord->no_urut + 1) : 1;
 
-        // 3. Logika Upload Berkas (Gabungan Statis & Kustom)
+        // 3. Logika Upload Berkas (Secure Upload)
         $filePaths = [];
+        $uploadDir = 'uploads/realisasi/' . date('Y/m');
 
         // A. Handle Berkas dari List (Statis)
-        if ($request->has('dokumen')) {
+        if ($request->hasFile('dokumen')) {
             foreach ($request->file('dokumen') as $nama_dokumen => $file) {
-                if ($file) {
-                    $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                if ($file && $file->isValid()) {
+                    // store() secara otomatis memberikan nama unik (hashName)
+                    $path = $file->store($uploadDir, 'public');
                     $filePaths[] = [
                         'nama_berkas' => $nama_dokumen,
-                        'path'        => $path,
+                        'path'         => $path,
                         'uploaded_at' => now()->toDateTimeString()
                     ];
                 }
@@ -244,11 +251,11 @@ class RealisasiControllerV2 extends Controller
             $customNames = $request->input('custom_nama_berkas');
 
             foreach ($customFiles as $key => $file) {
-                if ($file && isset($customNames[$key])) {
-                    $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                if ($file && $file->isValid() && isset($customNames[$key])) {
+                    $path = $file->store($uploadDir, 'public');
                     $filePaths[] = [
-                        'nama_berkas' => $customNames[$key], // Nama diambil dari input text
-                        'path'        => $path,
+                        'nama_berkas' => strip_tags($customNames[$key]), // Sanitasi input teks
+                        'path'         => $path,
                         'uploaded_at' => now()->toDateTimeString()
                     ];
                 }
@@ -279,7 +286,7 @@ class RealisasiControllerV2 extends Controller
         // --- LOGGING ---
         $this->logActivity(
             'Tambah Realisasi',
-            "User (PLO) membuat realisasi baru: {$realisasi->nama_kegiatan} dengan nominal Rp " . number_format($realisasi->jumlah, 0, ',', '.'),
+            "User (PLO) membuat realisasi baru: {$realisasi->nama_kegiatan}",
             'NULL',
             $realisasi->status_berkas ?? 'Draft',
             $realisasi->id
@@ -339,7 +346,7 @@ class RealisasiControllerV2 extends Controller
         ])->findOrFail($id);
 
         // Proteksi Role: PLO, Bendahara, dan PPBJ diizinkan
-        $allowedRoles = ['PLO', 'Bendahara', 'PPBJ'];
+        $allowedRoles = ['PLO', 'Bendahara', 'PPBJ', 'Superadmin', 'PPSPM'];
         if (!in_array(Auth::user()->role, $allowedRoles)) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses.');
         }
@@ -364,51 +371,61 @@ class RealisasiControllerV2 extends Controller
         $realisasi = Realisasi::findOrFail($id);
         $statusAwal = $realisasi->status_berkas;
 
-        // 1. Validasi
+        // 1. Validasi Hardened
         $rules = [
             'status_berkas'        => 'required',
-            // Validasi untuk berkas kustom baru
-            'custom_dokumen.*'     => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+            'custom_dokumen.*'     => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
             'custom_nama_berkas.*' => 'nullable|string',
         ];
 
+        // Validasi khusus berdasarkan Role
         if (Auth::user()->role == 'Bendahara') {
             $rules['gup'] = 'required';
+        } elseif (Auth::user()->role == 'PPSPM') {
+            // PPSPM bisa mengisi SPM dan Faktur Pajak (Opsional/Nullable tergantung kebijakan)
+            $rules['no_spm'] = 'nullable|string';
+            $rules['tgl_spm'] = 'nullable|date';
+            $rules['no_faktur_pajak'] = 'nullable|string';
+            $rules['tgl_faktur_pajak'] = 'nullable|date';
         } else {
             $rules += [
                 'nama_kegiatan'     => 'required',
                 'penerima_penyedia' => 'required',
                 'jumlah'            => 'required|numeric',
-                'dokumen.*'         => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
+                'dokumen.*'         => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
             ];
         }
+
         $request->validate($rules);
 
         // 2. Olah Data
+        $uploadDir = 'uploads/realisasi/' . date('Y/m');
+
         if (Auth::user()->role == 'Bendahara') {
             $data = $request->only(['gup', 'no_urut_arsip_spby', 'status_berkas', 'status_digitalisasi', 'status_sp2d']);
             $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
             $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
-
             $aktivitasLog = 'Update Kelengkapan & Digitalisasi Bendahara';
+        } elseif (Auth::user()->role == 'PPSPM') {
+            // PPSPM Update Data SPM & Faktur
+            $data = $request->only(['no_spm', 'tgl_spm', 'no_faktur_pajak', 'tgl_faktur_pajak', 'status_berkas', 'status_sp2d', 'status_digitalisasi']);
+            $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
+            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
+            $aktivitasLog = 'Update Data SPM & Faktur Pajak oleh PPSPM';
         } else {
-            // Jangan masukkan input berkas mentah ke array $data
             $data = $request->except(['dokumen', 'custom_dokumen', 'custom_nama_berkas']);
             $aktivitasLog = 'Update Data Realisasi';
 
-            // Ambil lampiran lama (decode JSON ke Array)
             $currentFiles = is_array($realisasi->lampiran)
                 ? $realisasi->lampiran
                 : json_decode($realisasi->lampiran, true) ?? [];
 
-            // A. UPDATE BERKAS DARI LIST ATAU BERKAS KUSTOM LAMA
-            // (Input 'dokumen' menangani semua file yang sudah punya label nama)
+            // A. Update berkas dari list
             if ($request->hasFile('dokumen')) {
                 foreach ($request->file('dokumen') as $nama_berkas => $file) {
-                    if ($file) {
-                        $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                    if ($file && $file->isValid()) {
+                        $path = $file->store($uploadDir, 'public');
 
-                        // Cari apakah berkas dengan nama ini sudah ada di array lampiran
                         $foundKey = -1;
                         foreach ($currentFiles as $key => $existing) {
                             if ($existing['nama_berkas'] === $nama_berkas) {
@@ -419,65 +436,50 @@ class RealisasiControllerV2 extends Controller
 
                         $entryData = [
                             'nama_berkas' => $nama_berkas,
-                            'path'        => $path,
+                            'path'         => $path,
                             'uploaded_at' => now()->toDateTimeString()
                         ];
 
                         if ($foundKey !== -1) {
-                            $currentFiles[$foundKey] = $entryData; // Timpa file lama
+                            $currentFiles[$foundKey] = $entryData;
                         } else {
-                            $currentFiles[] = $entryData; // Tambah jika belum ada
+                            $currentFiles[] = $entryData;
                         }
                     }
                 }
             }
 
-            // B. TAMBAH BERKAS KUSTOM BARU
-            // (Input 'custom_dokumen' menangani baris baru yang ditambahkan user)
+            // B. Tambah berkas kustom baru
             if ($request->hasFile('custom_dokumen')) {
                 $customFiles = $request->file('custom_dokumen');
                 $customNames = $request->input('custom_nama_berkas');
 
                 foreach ($customFiles as $key => $file) {
-                    if ($file && isset($customNames[$key])) {
-                        $path = $file->store('uploads/realisasi/' . date('Y/m'), 'public');
+                    if ($file && $file->isValid() && isset($customNames[$key])) {
+                        $path = $file->store($uploadDir, 'public');
                         $currentFiles[] = [
-                            'nama_berkas' => $customNames[$key], // Nama sesuai ketikan user
-                            'path'        => $path,
+                            'nama_berkas' => strip_tags($customNames[$key]),
+                            'path'         => $path,
                             'uploaded_at' => now()->toDateTimeString()
                         ];
                     }
                 }
             }
 
-            // Simpan kembali sebagai JSON
             $data['lampiran'] = json_encode($currentFiles);
-            $data['total']    = $request->jumlah;
+            $data['total'] = $request->jumlah;
             $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
             $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
-
-            // Bersihkan catatan revisi jika status dikirim kembali ke verifikator
-            if ($request->status_berkas == 'Proses Verifikasi' && \Str::contains($realisasi->uraian, '[CATATAN')) {
-                $data['uraian'] = \Str::before($request->uraian ?? $realisasi->uraian, "\n\n[CATATAN");
-            }
         }
 
         $data['updated_by'] = Auth::id();
         $realisasi->update($data);
 
-        // Logging aktivitas
-        $this->logActivity(
-            $aktivitasLog,
-            "User memperbarui data ID #{$id}",
-            $statusAwal,
-            $realisasi->status_berkas,
-            $realisasi->id
-        );
+        $this->logActivity($aktivitasLog, "User memperbarui data ID #{$id}", $statusAwal, $realisasi->status_berkas, $realisasi->id);
 
         return redirect()->route('realisasi-v2.index', ['coa_item_id' => $realisasi->coa_item_id])
             ->with('success', 'Data berhasil diperbarui.');
     }
-
     public function destroy($id)
     {
         $realisasiV2 = Realisasi::findOrFail($id);

@@ -134,7 +134,8 @@
         @if(in_array(Auth::user()->role, ['Bendahara', 'Superadmin']))
         @php
         $curStatus = Request::query('status_berkas');
-        $isBendaharaActive = in_array($curStatus, ['Terverifikasi', 'Menunggu Finalisasi Bendahara']);
+        // Tambahkan pengecekan route coa-items agar menu parent tetap 'active' saat diakses
+        $isBendaharaActive = in_array($curStatus, ['Terverifikasi', 'Menunggu Finalisasi Bendahara']) || Route::is('master.coa-items.*');
         @endphp
         <li class="nav-item {{ $isBendaharaActive ? 'active' : '' }}">
           <a data-bs-toggle="collapse" href="#bendaharaMenu">
@@ -152,6 +153,13 @@
               <li class="{{ $curStatus == 'Menunggu Finalisasi Bendahara' ? 'active' : '' }}">
                 <a href="{{ route('realisasi-v2.index', ['status_berkas' => 'Menunggu Finalisasi Bendahara']) }}">
                   <span class="sub-item">Finalisasi Pembayaran</span>
+                </a>
+              </li>
+
+              {{-- Menu Tambahan untuk Bendahara dengan nama berbeda --}}
+              <li class="{{ Route::is('master.coa-items.*') ? 'active' : '' }}">
+                <a href="{{ route('master.coa-items.index') }}">
+                  <span class="sub-item">Monitoring Anggaran</span>
                 </a>
               </li>
             </ul>

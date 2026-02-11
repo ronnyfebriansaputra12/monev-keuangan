@@ -18,7 +18,8 @@
         </div>
 
         <div class="login-form-side">
-            <div class="form-wrapper animated fadeIn">
+            {{-- Class 'shake' aktif jika ada error apapun --}}
+            <div class="form-wrapper animated fadeIn @if($errors->any()) shake @endif">
                 <div class="text-center mb-5">
                     <div class="logo-mobile d-lg-none mb-4">
                         <img src="{{ asset('assets/img/kaiadmin/logo_dark.svg') }}" alt="logo" height="40">
@@ -33,21 +34,45 @@
                 </div>
                 @endif
 
+                {{-- Alert Throttling (Percobaan Login Berlebih) --}}
+                @if($errors->has('email'))
+                @php
+                $errorMsg = $errors->first('email');
+                $isThrottled = Str::contains($errorMsg, 'Terlalu banyak percobaan') || Str::contains($errorMsg, 'menit');
+                @endphp
+
+                @if($isThrottled)
+                <div class="alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 16px; background-color: #fff5f5; color: #dc3545;">
+                    <i class="fas fa-lock me-3 fa-lg"></i>
+                    <div>
+                        <strong class="d-block">Akses Ditangguhkan</strong>
+                        <span class="small">{{ $errorMsg }}</span>
+                    </div>
+                </div>
+                @endif
+                @endif
+
                 <form method="POST" action="{{ route('login') }}">
                     @csrf
 
+                    {{-- Email Field --}}
                     <div class="input-group-modern mb-4">
                         <label class="small fw-bold text-uppercase text-muted mb-2 d-block">Email Address</label>
                         <div class="input-wrapper">
                             <i class="far fa-envelope"></i>
                             <input id="email" type="email" name="email"
                                 class="@error('email') is-invalid @enderror"
-                                value="{{ old('email') }}" placeholder="name@bpom.go.id" required autofocus>
+                                value="{{ old('email') }}" placeholder="name@bpom.go.id" required autofocus
+                                @if(isset($isThrottled) && $isThrottled) disabled @endif>
                         </div>
-                        @error('email')
-                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
-                        @enderror
+                        @if($errors->has('email') && !(isset($isThrottled) && $isThrottled))
+                        <span class="text-danger small mt-1 d-block">
+                            <i class="fas fa-exclamation-circle me-1"></i> {{ $errors->first('email') }}
+                        </span>
+                        @endif
                     </div>
+
+                    {{-- Password Field --}}
                     <div class="input-group-modern mb-3">
                         <label class="small fw-bold text-uppercase text-muted mb-2 d-block">Password</label>
                         <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
@@ -56,27 +81,31 @@
                             <input id="password" type="password" name="password"
                                 class="form-control @error('password') is-invalid @enderror"
                                 placeholder="••••••••" required
-                                style="width: 100%; padding: 15px 50px 15px 52px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 16px; font-weight: 500;">
+                                style="width: 100%; padding: 15px 50px 15px 52px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 16px; font-weight: 500;"
+                                @if(isset($isThrottled) && $isThrottled) disabled @endif>
 
                             <button type="button" class="btn-toggle-pw" onclick="togglePassword()"
-                                style="position: absolute; right: 55px; background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0; display: flex; align-items: center; z-index: 10;">
+                                style="position: absolute; right: 20px; background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0; display: flex; align-items: center; z-index: 10;">
                                 <i class="far fa-eye-slash" id="eye-icon" style="font-size: 1.1rem;"></i>
                             </button>
                         </div>
+
+                        {{-- Tampilkan error validasi password (panjang, huruf besar, simbol) --}}
                         @error('password')
-                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                        <span class="text-danger small mt-1 d-block">
+                            <i class="fas fa-shield-alt me-1"></i> {{ $message }}
+                        </span>
+                        @else
+                        {{-- Petunjuk format password jika tidak ada error --}}
+                        <div class="d-flex align-items-center mt-2 opacity-75">
+                            <i class="fas fa-info-circle text-primary me-2" style="font-size: 0.75rem;"></i>
+                            <span class="text-muted" style="font-size: 0.7rem;">Min. 8 Karakter, 1 Huruf Besar, Angka & Simbol.</span>
+                        </div>
                         @enderror
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <label class="custom-checkbox">
-                            <input type="checkbox" name="remember">
-                            <span class="checkmark"></span>
-                            <span class="label-text text-muted small">Ingat Saya</span>
-                        </label>
-                        <a href="#" class="text-primary small fw-bold text-decoration-none">Lupa Password?</a>
-                    </div>
 
-                    <button type="submit" class="btn btn-primary-modern w-100 mb-4">
+                    <button type="submit" class="btn btn-primary-modern w-100 mb-4"
+                        @if(isset($isThrottled) && $isThrottled) disabled style="opacity: 0.6; cursor: not-allowed;" @endif>
                         Masuk Ke Sistem <i class="fas fa-arrow-right ms-2"></i>
                     </button>
                 </form>
@@ -93,10 +122,38 @@
 <style>
     :root {
         --primary-color: #0056b3;
-        /* Biru BPOM Style */
         --secondary-color: #ffc107;
-        /* Kuning/Gold aksen */
         --bg-light: #f4f7fa;
+    }
+
+    /* Animasi Shake untuk Error */
+    .shake {
+        animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        transform: translate3d(0, 0, 0);
+    }
+
+    @keyframes shake {
+
+        10%,
+        90% {
+            transform: translate3d(-1px, 0, 0);
+        }
+
+        20%,
+        80% {
+            transform: translate3d(2px, 0, 0);
+        }
+
+        30%,
+        50%,
+        70% {
+            transform: translate3d(-4px, 0, 0);
+        }
+
+        40%,
+        60% {
+            transform: translate3d(4px, 0, 0);
+        }
     }
 
     .main-login-page {
@@ -119,7 +176,6 @@
         box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.15);
     }
 
-    /* Left Side Styling */
     .login-brand-side {
         flex: 1.4;
         background: url('https://images.unsplash.com/photo-1454165833767-027ffea9e778?q=80&w=2070&auto=format&fit=crop');
@@ -159,7 +215,6 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Form Side Styling */
     .login-form-side {
         flex: 1;
         padding: 60px;
@@ -203,6 +258,11 @@
         outline: none;
     }
 
+    .input-wrapper input.is-invalid {
+        border-color: #f87171;
+        background-color: #fffef2;
+    }
+
     .btn-primary-modern {
         background: var(--primary-color);
         color: white;
@@ -215,53 +275,10 @@
         transition: 0.4s;
     }
 
-    .btn-primary-modern:hover {
+    .btn-primary-modern:hover:not(:disabled) {
         background: #004494;
         transform: translateY(-3px);
         box-shadow: 0 15px 30px rgba(0, 86, 179, 0.3);
-    }
-
-    .custom-checkbox {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-    }
-
-    .custom-checkbox input {
-        display: none;
-    }
-
-    .checkmark {
-        width: 20px;
-        height: 20px;
-        border: 2px solid #cbd5e1;
-        border-radius: 6px;
-        margin-right: 12px;
-        position: relative;
-        transition: 0.2s;
-    }
-
-    .custom-checkbox input:checked+.checkmark {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-
-    .custom-checkbox input:checked+.checkmark::after {
-        content: '✔';
-        color: white;
-        font-size: 11px;
-        position: absolute;
-        left: 4px;
-        top: 0px;
-    }
-
-    .btn-toggle-pw {
-        position: absolute;
-        right: 18px;
-        background: none;
-        border: none;
-        color: #94a3b8;
-        cursor: pointer;
     }
 
     @media (max-width: 992px) {
@@ -285,12 +302,10 @@
 
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
-            // Ubah ikon ke mata terbuka
             eyeIcon.classList.remove('fa-eye-slash');
             eyeIcon.classList.add('fa-eye');
         } else {
             passwordInput.type = 'password';
-            // Ubah ikon ke mata tertutup
             eyeIcon.classList.remove('fa-eye');
             eyeIcon.classList.add('fa-eye-slash');
         }
