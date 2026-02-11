@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -65,10 +66,33 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|string',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id)
+            ],
+            // Aturan: Minimal 8 karakter, Huruf Besar & Kecil, Angka, & Simbol
+            'password' => [
+                'nullable',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+            ],
+            'role' => 'required|in:PLO,Verifikator,Bendahara,PPK,PPSPM,PPBJ',
             'plo_code' => 'nullable|string|max:50',
+        ], [
+            // Custom Error Messages dalam Bahasa Indonesia
+            'password.min' => 'Password minimal harus 8 karakter.',
+            'password.mixed_case' => 'Password harus mengandung campuran huruf besar dan kecil.',
+            'password.numbers' => 'Password harus mengandung setidaknya satu angka.',
+            'password.symbols' => 'Password harus mengandung setidaknya satu simbol/karakter khusus.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role.in' => 'Role yang dipilih tidak valid.',
         ]);
 
         $data = [
@@ -78,15 +102,17 @@ class UserController extends Controller
             'plo_code' => $request->plo_code,
         ];
 
+        // Password hanya diupdate jika user mengisi input password
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('master.users.index')->with('success', 'User berhasil diperbarui.');
+        return redirect()
+            ->route('master.users.index')
+            ->with('success', "User {$user->name} berhasil diperbarui.");
     }
-
     public function destroy(User $user)
     {
         $user->delete();

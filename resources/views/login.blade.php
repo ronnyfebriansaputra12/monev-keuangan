@@ -18,7 +18,6 @@
         </div>
 
         <div class="login-form-side">
-            {{-- Class 'shake' aktif jika ada error apapun --}}
             <div class="form-wrapper animated fadeIn @if($errors->any()) shake @endif">
                 <div class="text-center mb-5">
                     <div class="logo-mobile d-lg-none mb-4">
@@ -34,13 +33,11 @@
                 </div>
                 @endif
 
-                {{-- Alert Throttling (Percobaan Login Berlebih) --}}
                 @if($errors->has('email'))
                 @php
                 $errorMsg = $errors->first('email');
                 $isThrottled = Str::contains($errorMsg, 'Terlalu banyak percobaan') || Str::contains($errorMsg, 'menit');
                 @endphp
-
                 @if($isThrottled)
                 <div class="alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center" style="border-radius: 16px; background-color: #fff5f5; color: #dc3545;">
                     <i class="fas fa-lock me-3 fa-lg"></i>
@@ -73,35 +70,34 @@
                     </div>
 
                     {{-- Password Field --}}
-                    <div class="input-group-modern mb-3">
+                    <div class="input-group-modern mb-4">
                         <label class="small fw-bold text-uppercase text-muted mb-2 d-block">Password</label>
-                        <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
-                            <i class="far fa-lock-alt" style="position: absolute; left: 18px; color: #94a3b8; z-index: 10;"></i>
-
+                        <div class="input-wrapper password-field-container">
+                            <i class="far fa-lock-alt"></i>
                             <input id="password" type="password" name="password"
                                 class="form-control @error('password') is-invalid @enderror"
                                 placeholder="••••••••" required
-                                style="width: 100%; padding: 15px 50px 15px 52px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 16px; font-weight: 500;"
                                 @if(isset($isThrottled) && $isThrottled) disabled @endif>
 
-                            <button type="button" class="btn-toggle-pw" onclick="togglePassword()"
-                                style="position: absolute; right: 20px; background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0; display: flex; align-items: center; z-index: 10;">
-                                <i class="far fa-eye-slash" id="eye-icon" style="font-size: 1.1rem;"></i>
+                            <button type="button" class="btn-toggle-pw" onclick="togglePassword()">
+                                <i class="far fa-eye-slash" id="eye-icon"></i>
                             </button>
                         </div>
-
-                        {{-- Tampilkan error validasi password (panjang, huruf besar, simbol) --}}
                         @error('password')
                         <span class="text-danger small mt-1 d-block">
                             <i class="fas fa-shield-alt me-1"></i> {{ $message }}
                         </span>
-                        @else
-                        {{-- Petunjuk format password jika tidak ada error --}}
-                        <div class="d-flex align-items-center mt-2 opacity-75">
-                            <i class="fas fa-info-circle text-primary me-2" style="font-size: 0.75rem;"></i>
-                            <span class="text-muted" style="font-size: 0.7rem;">Min. 8 Karakter, 1 Huruf Besar, Angka & Simbol.</span>
-                        </div>
                         @enderror
+                    </div>
+
+                    {{-- Google reCAPTCHA --}}
+                    <div class="captcha-container mb-4 d-flex flex-column align-items-center">
+                        {!! NoCaptcha::display() !!}
+                        @if ($errors->has('g-recaptcha-response'))
+                        <span class="text-danger small mt-2 d-block">
+                            <i class="fas fa-robot me-1"></i> {{ $errors->first('g-recaptcha-response') }}
+                        </span>
+                        @endif
                     </div>
 
                     <button type="submit" class="btn btn-primary-modern w-100 mb-4"
@@ -126,36 +122,7 @@
         --bg-light: #f4f7fa;
     }
 
-    /* Animasi Shake untuk Error */
-    .shake {
-        animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
-        transform: translate3d(0, 0, 0);
-    }
-
-    @keyframes shake {
-
-        10%,
-        90% {
-            transform: translate3d(-1px, 0, 0);
-        }
-
-        20%,
-        80% {
-            transform: translate3d(2px, 0, 0);
-        }
-
-        30%,
-        50%,
-        70% {
-            transform: translate3d(-4px, 0, 0);
-        }
-
-        40%,
-        60% {
-            transform: translate3d(4px, 0, 0);
-        }
-    }
-
+    /* Core Layout */
     .main-login-page {
         height: 100vh;
         background: var(--bg-light);
@@ -169,13 +136,80 @@
         display: flex;
         width: 100%;
         max-width: 1200px;
-        height: 750px;
+        height: 800px;
         background: #fff;
         border-radius: 40px;
         overflow: hidden;
         box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.15);
     }
 
+    /* Input Styling */
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 18px;
+        color: #94a3b8;
+        z-index: 5;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 15px 15px 15px 52px;
+        background: #f8fafc;
+        border: 2px solid #f1f5f9;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .input-wrapper input:focus {
+        background: #fff;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 5px rgba(0, 86, 179, 0.1);
+        outline: none;
+    }
+
+    /* PERBAIKAN KHUSUS TOMBOL MATA */
+    .password-field-container {
+        position: relative;
+    }
+
+    .password-field-container input {
+        padding-right: 55px !important;
+        /* Ruang untuk ikon mata */
+    }
+
+    .btn-toggle-pw {
+        position: absolute;
+        right: 18px;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        z-index: 10;
+        height: 100%;
+    }
+
+    .btn-toggle-pw i {
+        position: static !important;
+        /* Melepas absolute dari selector .input-wrapper i */
+        font-size: 1.1rem;
+    }
+
+    .btn-toggle-pw:hover {
+        color: var(--primary-color);
+    }
+
+    /* Brand Side */
     .login-brand-side {
         flex: 1.4;
         background: url('https://images.unsplash.com/photo-1454165833767-027ffea9e778?q=80&w=2070&auto=format&fit=crop');
@@ -228,41 +262,6 @@
         max-width: 400px;
     }
 
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    .input-wrapper i {
-        position: absolute;
-        left: 18px;
-        color: #94a3b8;
-    }
-
-    .input-wrapper input {
-        width: 100%;
-        padding: 15px 15px 15px 52px;
-        background: #f8fafc;
-        border: 2px solid #f1f5f9;
-        border-radius: 16px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-weight: 500;
-        color: #1e293b;
-    }
-
-    .input-wrapper input:focus {
-        background: #fff;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 5px rgba(0, 86, 179, 0.1);
-        outline: none;
-    }
-
-    .input-wrapper input.is-invalid {
-        border-color: #f87171;
-        background-color: #fffef2;
-    }
-
     .btn-primary-modern {
         background: var(--primary-color);
         color: white;
@@ -281,6 +280,35 @@
         box-shadow: 0 15px 30px rgba(0, 86, 179, 0.3);
     }
 
+    /* Animations & Utils */
+    .shake {
+        animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+    }
+
+    @keyframes shake {
+
+        10%,
+        90% {
+            transform: translate3d(-1px, 0, 0);
+        }
+
+        20%,
+        80% {
+            transform: translate3d(2px, 0, 0);
+        }
+
+        30%,
+        50%,
+        70% {
+            transform: translate3d(-4px, 0, 0);
+        }
+
+        40%,
+        60% {
+            transform: translate3d(4px, 0, 0);
+        }
+    }
+
     @media (max-width: 992px) {
         .login-container {
             height: auto;
@@ -295,11 +323,12 @@
     }
 </style>
 
+{!! NoCaptcha::renderJs() !!}
+
 <script>
     function togglePassword() {
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.getElementById('eye-icon');
-
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             eyeIcon.classList.remove('fa-eye-slash');

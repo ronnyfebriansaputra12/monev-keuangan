@@ -37,17 +37,23 @@ class LoginController extends Controller
             ])->withInput($request->except('password'));
         }
 
-        // 2. Validasi Email & Password (8 Karakter, Huruf Besar, Angka, Spesial Karakter)
+        // 2. Validasi Email, Password, & Google reCAPTCHA
         $request->validate([
             'email' => ['required', 'email'],
             'password' => [
                 'required',
-                Password::min(8) // Minimal 8 karakter
-                    ->letters()  // Harus ada huruf
-                    ->mixedCase() // Harus ada huruf besar & kecil
-                    ->numbers()   // Harus ada angka
-                    ->symbols(),  // Harus ada spesial karakter (!@#$%^&*)
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
             ],
+            // Tambahkan rule captcha di sini
+            'g-recaptcha-response' => ['required', 'captcha'],
+        ], [
+            // Pesan error kustom untuk captcha
+            'g-recaptcha-response.required' => 'Wajib mencentang kotak "I\'m not a robot".',
+            'g-recaptcha-response.captcha' => 'Validasi captcha gagal, silakan muat ulang halaman.',
         ]);
 
         $credentials = $request->only('email', 'password');

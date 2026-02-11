@@ -21,9 +21,9 @@
                 <i class="fas fa-file-excel me-1"></i> Import Anggaran
             </a>
 
-            <a href="{{ route('master.coa-items.create') }}" class="btn btn-primary btn-round btn-sm">
+            <!-- <a href="{{ route('master.coa-items.create') }}" class="btn btn-primary btn-round btn-sm">
                 <i class="fa fa-plus me-1"></i> Tambah COA (Manual)
-            </a>
+            </a> -->
         </div>
     </div>
 </div>
