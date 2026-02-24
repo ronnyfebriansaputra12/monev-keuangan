@@ -21,7 +21,7 @@
             <div class="form-wrapper animated fadeIn @if($errors->any()) shake @endif">
                 <div class="text-center mb-5">
                     <div class="logo-mobile d-lg-none mb-4">
-                        <img src="{{ asset('assets/img/kaiadmin/logo_dark.svg') }}" alt="logo" height="40">
+                        <!-- <img src="{{ asset('assets/img/kaiadmin/logo_dark.svg') }}" alt="logo" height="40"> -->
                     </div>
                     <h2 class="fw-bold text-dark">Selamat Datang</h2>
                     <p class="text-muted small">Silakan masuk untuk mengelola data keuangan</p>
