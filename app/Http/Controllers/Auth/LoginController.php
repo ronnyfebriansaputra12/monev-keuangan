@@ -49,7 +49,7 @@ class LoginController extends Controller
             'g-recaptcha-response' => ['required', 'captcha'],
         ], [
             'g-recaptcha-response.required' => 'Wajib mencentang kotak "I\'m not a robot".',
-            'g-recaptcha-response.captcha' => 'Validasi captcha gagal, silakan muat ulang halaman.',
+            'g-recaptcha-response.captcha' => 'Validasi captcha gagal, silakan muat ulang halaman ini.',
         ]);
 
         $credentials = $request->only('email', 'password');
