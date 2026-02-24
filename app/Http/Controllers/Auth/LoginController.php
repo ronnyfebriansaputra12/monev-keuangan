@@ -13,13 +13,12 @@ use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
-    // 1. Tampilkan Halaman Login
     public function index()
     {
         if (Auth::check()) {
             return $this->redirectByRole(Auth::user());
         }
-        // Menggunakan view login KaiAdmin yang kita buat tadi
+
         return view('login');
     }
 
@@ -37,7 +36,6 @@ class LoginController extends Controller
             ])->withInput($request->except('password'));
         }
 
-        // 2. Validasi Email, Password, & Google reCAPTCHA
         $request->validate([
             'email' => ['required', 'email'],
             'password' => [
@@ -48,10 +46,8 @@ class LoginController extends Controller
                     ->numbers()
                     ->symbols(),
             ],
-            // Tambahkan rule captcha di sini
             'g-recaptcha-response' => ['required', 'captcha'],
         ], [
-            // Pesan error kustom untuk captcha
             'g-recaptcha-response.required' => 'Wajib mencentang kotak "I\'m not a robot".',
             'g-recaptcha-response.captcha' => 'Validasi captcha gagal, silakan muat ulang halaman.',
         ]);
