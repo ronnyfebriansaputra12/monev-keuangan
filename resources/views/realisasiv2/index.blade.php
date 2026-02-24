@@ -465,35 +465,29 @@
             });
         });
 
-        // ✅ Notification Logic
+// ✅ Notification Logic
         const toast = (title, text, icon, btnClass) => {
             swal({
                 title: title,
                 text: text,
                 icon: icon,
-                buttons: {
-                    confirm: {
-                        text: "OK",
-                        className: btnClass
-                    }
+                button: {
+                    text: "OK",
+                    className: btnClass
                 }
             });
         };
 
         @if(session('success'))
-        toast("Berhasil", {
-            !!json_encode(session('success')) !!
-        }, "success", "btn btn-success");
+            toast("Berhasil", {!! json_encode(session('success')) !!}, "success", "btn btn-success");
         @endif
+
         @if(session('error'))
-        toast("Gagal", {
-            !!json_encode(session('error')) !!
-        }, "error", "btn btn-danger");
+            toast("Gagal", {!! json_encode(session('error')) !!}, "error", "btn btn-danger");
         @endif
+
         @if($errors->any())
-        toast("Gagal", {
-            !!json_encode($errors->first()) !!
-        }, "error", "btn btn-danger");
+            toast("Gagal", {!! json_encode($errors->first()) !!}, "error", "btn btn-danger");
         @endif
     });
 </script>

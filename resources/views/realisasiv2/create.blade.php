@@ -94,7 +94,7 @@
                                         @else
                                         <select name="jenis_realisasi" id="jenis_realisasi" class="form-select border-success shadow-sm">
                                             <option value="">-- Pilih --</option>
-                                            <option value="LS" {{ old('jenis_realisasi') == 'LS' ? 'selected' : '' }}>LS</option>
+                                            <!-- <option value="LS" {{ old('jenis_realisasi') == 'LS' ? 'selected' : '' }}>LS</option> -->
                                             <option value="GUP" {{ old('jenis_realisasi') == 'GUP' ? 'selected' : '' }}>GUP</option>
                                         </select>
                                         @endif
