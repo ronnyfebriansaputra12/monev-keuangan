@@ -91,7 +91,7 @@
                     </div>
 
                     {{-- Google reCAPTCHA --}}
-                    <div class="captcha-container mb-4 d-flex flex-column align-items-center">
+                    <div class="captcha-container mb-4 d-flex flex-column align-items-center" style="min-height: 78px; position: relative; z-index: 10;">
                         {!! NoCaptcha::display() !!}
                         @if ($errors->has('g-recaptcha-response'))
                         <span class="text-danger small mt-2 d-block">
@@ -182,7 +182,6 @@
 
     .password-field-container input {
         padding-right: 55px !important;
-        /* Ruang untuk ikon mata */
     }
 
     .btn-toggle-pw {
@@ -201,7 +200,6 @@
 
     .btn-toggle-pw i {
         position: static !important;
-        /* Melepas absolute dari selector .input-wrapper i */
         font-size: 1.1rem;
     }
 
@@ -323,6 +321,7 @@
     }
 </style>
 
+{{-- PINDAHKAN INI KE DALAM SECTION CONTENT --}}
 {!! NoCaptcha::renderJs() !!}
 
 <script>
