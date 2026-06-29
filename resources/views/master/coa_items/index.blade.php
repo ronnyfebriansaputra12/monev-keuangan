@@ -43,46 +43,61 @@
 @endif
 
 {{-- Widget Statistik Anggaran --}}
+<div class="row mb-4 justify-content-center">
+    <div class="col-md-8">
+        <div class="card card-round border-0 shadow-lg" style="background: linear-gradient(135deg, #1d7af3 0%, #0056b3 100%); border-radius: 15px;">
+            <div class="card-body p-4 text-center">
+                <div class="text-white-50 fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 2px;">
+                    <i class="fas fa-coins me-2"></i> Total Alokasi Pagu Keseluruhan
+                </div>
+                <h1 class="display-5 fw-bold text-white mb-0">
+                    Rp {{ number_format($totalPagu, 0, ',', '.') }}
+                </h1>
+                <div class="mt-2">
+                    <span class="badge bg-white text-primary px-3 py-2" style="border-radius: 20px; font-size: 0.75rem;">
+                        Tahun Anggaran {{ $tahun ?? date('Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="card card-round border border-primary h-100 shadow-sm">
-            <div class="card-body p-3">
-                <div class="card-title fw-bold text-uppercase mb-3 text-primary" style="font-size: 0.75rem; letter-spacing: 1px;">
-                    <i class="fas fa-wallet me-1"></i> Monitoring Pagu & Sisa Anggaran
+        <div class="card card-round border-0 shadow-sm h-100" style="border-left: 5px solid #28a745 !important;">
+            <div class="card-body p-4 text-center">
+                <div class="card-title fw-bold text-uppercase mb-3 text-success" style="font-size: 0.7rem; letter-spacing: 1px;">
+                    <i class="fas fa-check-circle me-1"></i> Monitoring Pagu & Sisa (SP2D)
                 </div>
-                <div class="row text-center">
+                <div class="row align-items-center">
                     <div class="col-6 border-end">
-                        <p class="card-category mb-1 text-muted">Total Pagu</p>
-                        <h4 class="card-title text-primary fw-bold mb-0">Rp {{ number_format($totalSisa, 0, ',', '.') }}</h4>
-                        <!-- <small class="text-muted small">Alokasi Awal</small> -->
+                        <p class="text-muted mb-1" style="font-size: 0.8rem;">Total Pagu</p>
+                        <h4 class="fw-bold text-dark mb-0">Rp {{ number_format($totalSisa, 0, ',', '.') }}</h4>
                     </div>
-                    <div class="col-6 border-end">
-                        <p class="card-category mb-1">Realisasi (SP2D)</p>
-                        <h4 class="card-title text-secondary fw-bold mb-0">Rp {{ number_format($totalRealisasi, 0, ',', '.') }}</h4>
-                        <!-- <small class="text-muted small">Sudah Selesai</small> -->
+                    <div class="col-6">
+                        <p class="text-muted mb-1" style="font-size: 0.8rem;">Realisasi (SP2D)</p>
+                        <h4 class="fw-bold text-success mb-0">Rp {{ number_format($totalRealisasi, 0, ',', '.') }}</h4>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-md-6">
-        <div class="card card-round border border-secondary h-100 shadow-sm">
-            <div class="card-body p-3">
-                <div class="card-title fw-bold text-uppercase mb-3 text-secondary" style="font-size: 0.75rem; letter-spacing: 1px;">
-                    <i class="fas fa-file-invoice-dollar me-1"></i> Monitoring Realisasi (Pengeluaran)
+        <div class="card card-round border-0 shadow-sm h-100" style="border-left: 5px solid #ffc107 !important;">
+            <div class="card-body p-4 text-center">
+                <div class="card-title fw-bold text-uppercase mb-3 text-warning" style="font-size: 0.7rem; letter-spacing: 1px;">
+                    <i class="fas fa-spinner me-1"></i> Monitoring Akrual (Proses)
                 </div>
-                <div class="row text-center">
-                    <div class="col-6">
-                        <p class="card-category mb-1 text-danger">Pagu Akrual</p>
-                        <h4 class="card-title text-danger fw-bold mb-0">Rp {{ number_format($totalSisaSebelumSP2D, 0, ',', '.') }}</h4>
-                        <!-- <small class="text-danger fw-bold small">Alokasi SP2D</small> -->
+                <div class="row align-items-center">
+                    <div class="col-6 border-end">
+                        <p class="text-muted mb-1" style="font-size: 0.8rem;">Pagu Akrual</p>
+                        <h4 class="fw-bold text-danger mb-0">Rp {{ number_format($totalSisaSebelumSP2D, 0, ',', '.') }}</h4>
                     </div>
                     <div class="col-6">
-                        <p class="card-category mb-1 text-warning">Realisasi Akrual</p>
-                        <h4 class="card-title text-warning fw-bold mb-0">Rp {{ number_format($totalSebelumSP2D, 0, ',', '.') }}</h4>
-                        <!-- <small class="text-warning fw-bold small">Sedang Proses</small> -->
+                        <p class="text-muted mb-1" style="font-size: 0.8rem;">Realisasi Akrual</p>
+                        <h4 class="fw-bold text-warning mb-0">Rp {{ number_format($totalSebelumSP2D, 0, ',', '.') }}</h4>
                     </div>
                 </div>
             </div>
