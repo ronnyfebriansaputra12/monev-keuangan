@@ -370,29 +370,41 @@ class RealisasiControllerV2 extends Controller
     {
         $realisasi = Realisasi::findOrFail($id);
         $statusAwal = $realisasi->status_berkas;
+        $user = Auth::user();
 
         // 1. Validasi Hardened
         $rules = [
             'status_berkas'        => 'required',
-            'custom_dokumen.*'     => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
+            'custom_dokumen.*'     => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
             'custom_nama_berkas.*' => 'nullable|string',
         ];
 
-        // Validasi khusus berdasarkan Role
-        if (Auth::user()->role == 'Bendahara') {
+        // Validasi Dinamis Berdasarkan Role
+        if ($user->role == 'Bendahara') {
             $rules['gup'] = 'required';
-        } elseif (Auth::user()->role == 'PPSPM') {
-            // PPSPM bisa mengisi SPM dan Faktur Pajak (Opsional/Nullable tergantung kebijakan)
-            $rules['no_spm'] = 'nullable|string';
-            $rules['tgl_spm'] = 'nullable|date';
-            $rules['no_faktur_pajak'] = 'nullable|string';
-            $rules['tgl_faktur_pajak'] = 'nullable|date';
+        } elseif ($user->role == 'PPBJ') {
+            // Tambahan validasi SPP untuk PPBJ (karena di view edit/create sekarang ada input ini)
+            $rules += [
+                'no_spp'            => 'required|string',
+                'tgl_spp'           => 'required|date',
+                'nama_kegiatan'     => 'required',
+                'penerima_penyedia' => 'required',
+                'jumlah'            => 'required|numeric',
+            ];
+        } elseif ($user->role == 'PPSPM') {
+            $rules += [
+                'no_spm'            => 'nullable|string',
+                'tgl_spm'           => 'nullable|date',
+                'no_faktur_pajak'   => 'nullable|string',
+                'tgl_faktur_pajak'  => 'nullable|date',
+            ];
         } else {
+            // Default (PLO / Verifikator)
             $rules += [
                 'nama_kegiatan'     => 'required',
                 'penerima_penyedia' => 'required',
                 'jumlah'            => 'required|numeric',
-                'dokumen.*'         => 'nullable|file|mimes:pdf,jpg,png,jpeg|mimetypes:application/pdf,image/jpeg,image/png|max:5120',
+                'dokumen.*'         => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:5120',
             ];
         }
 
@@ -400,32 +412,31 @@ class RealisasiControllerV2 extends Controller
 
         // 2. Olah Data
         $uploadDir = 'uploads/realisasi/' . date('Y/m');
+        $data = [];
 
-        if (Auth::user()->role == 'Bendahara') {
-            $data = $request->only(['gup', 'no_urut_arsip_spby', 'status_berkas', 'status_digitalisasi', 'status_sp2d']);
-            $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
-            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
+        if ($user->role == 'Bendahara') {
+            $data = $request->only(['gup', 'no_urut_arsip_spby', 'status_berkas']);
             $aktivitasLog = 'Update Kelengkapan & Digitalisasi Bendahara';
-        } elseif (Auth::user()->role == 'PPSPM') {
-            // PPSPM Update Data SPM & Faktur
-            $data = $request->only(['no_spm', 'tgl_spm', 'no_faktur_pajak', 'tgl_faktur_pajak', 'status_berkas', 'status_sp2d', 'status_digitalisasi']);
-            $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
-            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
-            $aktivitasLog = 'Update Data SPM & Faktur Pajak oleh PPSPM';
+        } elseif ($user->role == 'PPSPM') {
+            $data = $request->only(['no_spm', 'tgl_spm', 'no_faktur_pajak', 'tgl_faktur_pajak', 'status_berkas']);
+            $aktivitasLog = 'Update Data SPM oleh PPSPM';
         } else {
-            $data = $request->except(['dokumen', 'custom_dokumen', 'custom_nama_berkas']);
-            $aktivitasLog = 'Update Data Realisasi';
+            // Role PLO atau PPBJ
+            $data = $request->except(['dokumen', 'custom_dokumen', 'custom_nama_berkas', '_token', '_method']);
+            $aktivitasLog = 'Update Data Realisasi oleh ' . $user->role;
 
+            // Logika File Lampiran (Hanya untuk Role yang bisa upload: PLO/PPBJ)
             $currentFiles = is_array($realisasi->lampiran)
                 ? $realisasi->lampiran
                 : json_decode($realisasi->lampiran, true) ?? [];
 
-            // A. Update berkas dari list
+            // A. Update berkas dari list statis
             if ($request->hasFile('dokumen')) {
                 foreach ($request->file('dokumen') as $nama_berkas => $file) {
                     if ($file && $file->isValid()) {
                         $path = $file->store($uploadDir, 'public');
 
+                        // Cari apakah berkas dengan nama yang sama sudah ada, jika ada replace
                         $foundKey = -1;
                         foreach ($currentFiles as $key => $existing) {
                             if ($existing['nama_berkas'] === $nama_berkas) {
@@ -436,7 +447,7 @@ class RealisasiControllerV2 extends Controller
 
                         $entryData = [
                             'nama_berkas' => $nama_berkas,
-                            'path'         => $path,
+                            'path'        => $path,
                             'uploaded_at' => now()->toDateTimeString()
                         ];
 
@@ -459,22 +470,26 @@ class RealisasiControllerV2 extends Controller
                         $path = $file->store($uploadDir, 'public');
                         $currentFiles[] = [
                             'nama_berkas' => strip_tags($customNames[$key]),
-                            'path'         => $path,
+                            'path'        => $path,
                             'uploaded_at' => now()->toDateTimeString()
                         ];
                     }
                 }
             }
-
             $data['lampiran'] = json_encode($currentFiles);
-            $data['total'] = $request->jumlah;
-            $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
-            $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
+            $data['total'] = $request->jumlah; // Menyelaraskan field total dengan jumlah bruto
         }
 
+        // Checkbox Handling (Global/Tergantung input ada atau tidak di request)
+        $data['status_digitalisasi'] = $request->has('status_digitalisasi') ? 1 : 0;
+        $data['status_sp2d']         = $request->has('status_sp2d') ? 1 : 0;
+
         $data['updated_by'] = Auth::id();
+
+        // 3. Eksekusi Update
         $realisasi->update($data);
 
+        // 4. Log & Redirect
         $this->logActivity($aktivitasLog, "User memperbarui data ID #{$id}", $statusAwal, $realisasi->status_berkas, $realisasi->id);
 
         return redirect()->route('realisasi-v2.index', ['coa_item_id' => $realisasi->coa_item_id])
